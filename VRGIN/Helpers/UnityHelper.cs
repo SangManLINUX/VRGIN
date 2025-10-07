@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using UnityEngine;
 using VRGIN.Core;
 
@@ -53,11 +52,11 @@ namespace VRGIN.Helpers
             if (!_AssetBundles.ContainsKey(key))
             {
                 _AssetBundles[key] = LoadAssetBundle(assetBundleBytes);
-                if(_AssetBundles[key] == null)
+                if (_AssetBundles[key] == null)
                 {
                     VRLog.Error("Looks like the asset bundle failed to load?");
                 }
-            } 
+            }
 
             try
             {
@@ -67,15 +66,25 @@ namespace VRGIN.Helpers
                 //    VRLog.Info(asset.name);
                 //}
 
-                name = name.Replace("Custom/", "");
+                //name = name.Replace("Custom/", "");
+                name = name.ToLower();
+                string prefix = "Assets/Shaders/";
+                string postfix = ".shader";
+                name = prefix + name + postfix;
+                //name = name.ToLower();
                 var loadedAsset = _AssetBundles[key].LoadAsset<T>(name);
-                if (!loadedAsset)
+                if ((UnityEngine.Object)loadedAsset == null)
                 {
                     VRLog.Error("Failed to load {0}", name);
                 }
 
-                return !typeof(Shader).IsAssignableFrom(typeof(T)) && !typeof(ComputeShader).IsAssignableFrom(typeof(T)) ? UnityEngine.Object.Instantiate<T>(loadedAsset) : loadedAsset;
-            } catch(Exception e)
+                return !typeof(Shader).IsAssignableFrom(typeof(T))
+                    && !typeof(ComputeShader).IsAssignableFrom(typeof(T))
+                    && !typeof(Material).IsAssignableFrom(typeof(T))
+                    ? UnityEngine.Object.Instantiate<T>(loadedAsset)
+                    : loadedAsset;
+            }
+            catch (Exception e)
             {
                 VRLog.Error(e);
                 return null;
@@ -88,10 +97,12 @@ namespace VRGIN.Helpers
             if (_LoadFromMemory != null)
             {
                 return _LoadFromMemory.Invoke(null, new object[] { bytes }) as AssetBundle;
-            } else if(_CreateFromMemory != null)
+            }
+            else if (_CreateFromMemory != null)
             {
                 return _CreateFromMemory.Invoke(null, new object[] { bytes }) as AssetBundle;
-            } else
+            }
+            else
             {
                 VRLog.Error("Could not find a way to load AssetBundles!");
                 return null;
@@ -141,7 +152,7 @@ namespace VRGIN.Helpers
         public static void DrawRay(Color color, Ray ray)
         {
             RayDrawer drawer;
-            if(!_Rays.TryGetValue(color, out drawer) || !drawer)
+            if (!_Rays.TryGetValue(color, out drawer) || !drawer)
             {
                 drawer = RayDrawer.Create(color, ray);
                 _Rays[color] = drawer;
@@ -302,7 +313,7 @@ namespace VRGIN.Helpers
                     VRLog.Warn("NULL component: " + c);
                     continue;
                 }
-               
+
                 components[c.GetType().Name] = AnalyzeComponent(c);
             }
 
@@ -406,7 +417,7 @@ namespace VRGIN.Helpers
                 RenderTexture.active = oldRT;
             }
         }
-        
+
         private class RayDrawer : ProtectedBehaviour
         {
 
@@ -453,7 +464,7 @@ namespace VRGIN.Helpers
 
             private void CheckAge()
             {
-                if(Time.time - _LastTouch > 1f)
+                if (Time.time - _LastTouch > 1f)
                 {
                     gameObject.SetActive(false);
                 }

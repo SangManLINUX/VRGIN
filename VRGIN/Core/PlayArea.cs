@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace VRGIN.Core
 {
@@ -27,15 +23,18 @@ namespace VRGIN.Core
         {
             Scale = 1;
         }
-        
+
         public void Apply()
         {
             var rotOffset = Quaternion.Euler(0, Rotation, 0);
             var steamCam = VR.Camera.SteamCam;
 
-            steamCam.origin.position = Position
-                - rotOffset * new Vector3(steamCam.head.transform.localPosition.x, 0, steamCam.head.transform.localPosition.z) * Scale;
-            steamCam.origin.rotation = rotOffset;
+            //steamCam.origin.position = Position
+                //- rotOffset * new Vector3(steamCam.head.transform.localPosition.x, 0, steamCam.head.transform.localPosition.z) * Scale;
+            steamCam.transform.parent.position = Position
+                - rotOffset * new Vector3(steamCam.transform.localPosition.x, 0, steamCam.transform.localPosition.z) * Scale;
+            //steamCam.origin.rotation = rotOffset;
+            steamCam.transform.parent.rotation = rotOffset;
 
             VR.Settings.IPDScale = Scale;
         }

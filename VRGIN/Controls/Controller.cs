@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 using Valve.VR;
@@ -9,8 +8,6 @@ using VRGIN.Controls.Handlers;
 using VRGIN.Controls.Tools;
 using VRGIN.Core;
 using VRGIN.Helpers;
-using VRGIN.Native;
-using static VRGIN.Native.WindowsInterop;
 
 namespace VRGIN.Controls
 {
@@ -67,7 +64,8 @@ namespace VRGIN.Controls
 
         private bool _Started = false;
 
-        public SteamVR_TrackedObject Tracking;
+        //public SteamVR_TrackedObject Tracking;
+        public SteamVR_Behaviour_Pose Tracking;
         public SteamVR_RenderModel Model { get; private set; }
         protected BoxCollider Collider;
 
@@ -87,6 +85,9 @@ namespace VRGIN.Controls
 
 
         public RumbleManager Rumble { get; private set; }
+
+        public SteamVR_Action_Boolean applicationMenuAction = SteamVR_Input.GetBooleanAction("ApplicationMenu");
+        public SteamVR_Input_Sources handType = SteamVR_Input_Sources.Any;
 
         /// <summary>
         /// Tries to acquire the focus of the controller, meaning that tools will be temporarily halted.
@@ -157,14 +158,16 @@ namespace VRGIN.Controls
         {
             GameObject.Destroy(gameObject);
 
-			SteamVR_Events.RenderModelLoaded.Remove(_OnRenderModelLoaded);
+            SteamVR_Events.RenderModelLoaded.Remove(_OnRenderModelLoaded);
         }
 
         protected void SetUp()
         {
-			SteamVR_Events.RenderModelLoaded.Listen(_OnRenderModelLoaded);
+            SteamVR_Events.RenderModelLoaded.Listen(_OnRenderModelLoaded);
 
-            Tracking = gameObject.AddComponent<SteamVR_TrackedObject>();
+            //Tracking = gameObject.AddComponent<SteamVR_TrackedObject>();
+            Tracking = gameObject.AddComponent<SteamVR_Behaviour_Pose>();
+            //Tracking.inputSource = InputSources;
             Rumble = gameObject.AddComponent<RumbleManager>();
             gameObject.AddComponent<BodyRumbleHandler>();
             gameObject.AddComponent<MenuHandler>();
@@ -185,30 +188,32 @@ namespace VRGIN.Controls
             Collider = new GameObject("Collider").AddComponent<BoxCollider>();
             Collider.transform.SetParent(transform, false);
             Collider.center = new Vector3(0, -0.02f, -0.06f);
-            Collider.size = new Vector3(-0.05f, 0.05f, 0.2f);
+            //Collider.size = new Vector3(-0.05f, 0.05f, 0.2f);
+            Collider.size = new Vector3(0.05f, 0.05f, 0.2f);
             Collider.isTrigger = true;
 
             gameObject.AddComponent<Rigidbody>().isKinematic = true;
         }
 
-		private void _OnRenderModelLoaded(SteamVR_RenderModel model, bool isLoaded)
+        private void _OnRenderModelLoaded(SteamVR_RenderModel model, bool isLoaded)
         {
             try
             {
-				var renderModel = model;
-                    if (renderModel && renderModel.transform.IsChildOf(transform))
-                    {
-                        VRLog.Info("Render model loaded!");
-                        gameObject.SendMessageToAll("OnRenderModelLoaded");
-                        OnRenderModelLoaded();
-                    }
-            } catch(Exception e)
+                var renderModel = model;
+                if (renderModel && renderModel.transform.IsChildOf(transform))
+                {
+                    VRLog.Info("Render model loaded!");
+                    gameObject.SendMessageToAll("OnRenderModelLoaded");
+                    OnRenderModelLoaded();
+                }
+            }
+            catch (Exception e)
             {
                 VRLog.Error(e);
             }
-}
+        }
 
-		private void OnRenderModelLoaded()
+        private void OnRenderModelLoaded()
         {
             //PlaceCanvas();
         }
@@ -318,18 +323,35 @@ namespace VRGIN.Controls
         /// <summary>
         /// Gets the attached controller input object.
         /// </summary>
-        public SteamVR_Controller.Device Input
+        /*public SteamVR_Controller.Device Input
         {
             get
             {
                 return SteamVR_Controller.Input((int)Tracking.index);
             }
-        }
+        }*/
+
+        /*public SteamVR_Input_Sources InputSources
+        {
+            get
+            {
+                if ((bool)Tracking)
+                {
+                    return Tracking.inputSource;
+                }
+                throw new NullReferenceException("Tracking is null");
+            }
+            set
+            {
+                if ((bool)Tracking) Tracking.inputSource = value;
+            }
+        }*/
 
         protected override void OnUpdate()
         {
             base.OnUpdate();
-            var device = SteamVR_Controller.Input((int)Tracking.index);
+            //var device = SteamVR_Controller.Input((int)Tracking.index);
+            //var device = SteamVR_Input_Sources.Any;
 
             if (_Lock != null && _Lock.IsInvalidating)
             {
@@ -338,16 +360,19 @@ namespace VRGIN.Controls
 
             if (_Lock == null || !_Lock.IsValid)
             {
-                if (device.GetPressDown(EVRButtonId.k_EButton_ApplicationMenu))
+                //if (device.GetPressDown(EVRButtonId.k_EButton_ApplicationMenu))
+                if (applicationMenuAction.GetStateDown(SteamVR_Input_Sources.Any))
                 {
                     appButtonPressTime = Time.unscaledTime;
                 }
-                if (device.GetPress(EVRButtonId.k_EButton_ApplicationMenu) && (Time.unscaledTime - appButtonPressTime) > APP_BUTTON_TIME_THRESHOLD)
+                //if (device.GetPress(EVRButtonId.k_EButton_ApplicationMenu) && (Time.unscaledTime - appButtonPressTime) > APP_BUTTON_TIME_THRESHOLD)
+                if (applicationMenuAction.GetState(SteamVR_Input_Sources.Any) && (Time.unscaledTime - appButtonPressTime) > APP_BUTTON_TIME_THRESHOLD)
                 {
                     ShowHelp();
                     appButtonPressTime = null;
                 }
-                if (device.GetPressUp(EVRButtonId.k_EButton_ApplicationMenu))
+                //if (device.GetPressUp(EVRButtonId.k_EButton_ApplicationMenu))
+                if (applicationMenuAction.GetStateUp(SteamVR_Input_Sources.Any))
                 {
                     if (helpShown)
                     {
@@ -375,11 +400,16 @@ namespace VRGIN.Controls
 
         private void TryReleaseLock()
         {
-            var input = Input;
+            /*var input = Input;
             foreach(var value in Enum.GetValues(typeof(EVRButtonId)).OfType<EVRButtonId>())
             {
                 if (input.GetPress(value))
                     return;
+            }*/
+            // TODO: I don't get it...
+            if (applicationMenuAction.GetState(handType))
+            {
+                return;
             }
 
             // Release
@@ -424,7 +454,7 @@ namespace VRGIN.Controls
             // Copied straight out of Unity
             canvas.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 950);
             canvas.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 950);
-            
+
             canvas.transform.localPosition = new Vector3(0, -0.02725995f, 0.0279f);
             canvas.transform.localRotation = Quaternion.Euler(30, 180, 180);
             canvas.transform.localScale = new Vector3(4.930151e-05f, 4.930148e-05f, 0);

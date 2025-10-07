@@ -73,6 +73,16 @@ namespace VRGIN {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] vrgin_2018_4 {
+            get {
+                object obj = ResourceManager.GetObject("vrgin_2018_4", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] vrgin_5_0 {
             get {
                 object obj = ResourceManager.GetObject("vrgin_5_0", resourceCulture);

@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
+using Valve.VR;
 using VRGIN.Core;
 using VRGIN.Helpers;
 
@@ -18,6 +17,11 @@ namespace VRGIN.Controls
         private HashSet<IRumbleSession> _RumbleSessions = new HashSet<IRumbleSession>();
         private float _LastImpulse;
         private Controller _Controller;
+
+        private SteamVR_Action_Vibration hapticAction = SteamVR_Actions.default_Haptic;
+        SteamVR_Input_Sources targetSource = SteamVR_Input_Sources.Any;
+        float amplitude = 1.0f;
+        float frequency = 0.0f;
 
         protected override void OnStart()
         {
@@ -51,7 +55,9 @@ namespace VRGIN.Controls
                     {
                         if (VR.Settings.Rumble)
                         {
-                            SteamVR_Controller.Input((int)_Controller.Tracking.index).TriggerHapticPulse(session.MicroDuration);
+                            float durationSeconds = session.MicroDuration / 1000000f;
+                            //SteamVR_Controller.Input((int)_Controller.Tracking.index).TriggerHapticPulse(session.MicroDuration);
+                            hapticAction.Execute(0f, durationSeconds, frequency, amplitude, targetSource);
                         }
                         _LastImpulse = Time.unscaledTime;
                         session.Consume();

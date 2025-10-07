@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -18,44 +16,50 @@ namespace VRGIN.Core
 
         private string GetKey(string method)
         {
-            return String.Format("{0}#{1}",GetType().FullName,method);
+            return String.Format("{0}#{1}", GetType().FullName, method);
         }
+
         protected void Start()
         {
-            SafelyCall(OnStart);
+            //SafelyCall(OnStart);
+            OnStart();
         }
 
         protected void Awake()
         {
-            SafelyCall(OnAwake);
+            //SafelyCall(OnAwake);
+            OnAwake();
         }
 
         protected void Update()
         {
-            SafelyCall(OnUpdate);
+            //SafelyCall(OnUpdate);
+            OnUpdate();
         }
 
         protected void LateUpdate()
         {
-            SafelyCall(OnLateUpdate);
+            //SafelyCall(OnLateUpdate);
+            OnLateUpdate();
         }
 
         protected void FixedUpdate()
         {
-            SafelyCall(OnFixedUpdate);
+            //SafelyCall(OnFixedUpdate);
+            OnFixedUpdate();
         }
 
-        protected void OnLevelWasLoaded(int level)
+        /*protected void OnLevelWasLoaded(int level)
         {
             SafelyCall(delegate { OnLevel(level); });
-        }
+        }*/
 
         protected virtual void OnStart() { }
         protected virtual void OnUpdate() { }
         protected virtual void OnLateUpdate() { }
         protected virtual void OnFixedUpdate() { }
         protected virtual void OnAwake() { }
-        protected virtual void OnLevel(int level) { }
+        //protected virtual void OnLevel(int level) { }
 
 
         private void SafelyCall(Action action)
@@ -89,7 +93,7 @@ namespace VRGIN.Core
             var builder = new StringBuilder();
 
             var enumerator = PerformanceTable.GetEnumerator();
-            while(enumerator.MoveNext())
+            while (enumerator.MoveNext())
             {
                 builder.AppendFormat("{1}ms: {0}\n", enumerator.Current.Key, enumerator.Current.Value / Time.realtimeSinceStartup);
             }
@@ -108,7 +112,8 @@ namespace VRGIN.Core
             try
             {
                 action();
-            } catch(Exception e)
+            }
+            catch (Exception e)
             {
                 VRLog.Error(e);
             }

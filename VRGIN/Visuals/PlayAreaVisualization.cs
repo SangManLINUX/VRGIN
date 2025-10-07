@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 using Valve.VR;
 using VRGIN.Core;
 
@@ -21,7 +17,7 @@ namespace VRGIN.U46.Visuals
             base.OnAwake();
 
             CreateArea();
-            
+
             Indicator = GameObject.CreatePrimitive(PrimitiveType.Sphere).transform;
             Indicator.SetParent(transform, false);
 
@@ -32,7 +28,8 @@ namespace VRGIN.U46.Visuals
             foreach (var indicator in new Transform[] { Indicator, HeightIndicator })
             {
                 var renderer = indicator.GetComponent<Renderer>();
-                renderer.material = Resources.GetBuiltinResource<Material>("Sprites-Default.mat");
+                //renderer.material = Resources.GetBuiltinResource<Material>("Sprites-Default.mat");
+                renderer.material = new Material(Shader.Find("Sprites/Default"));
                 //renderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
                 //renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 #if UNITY_4_5
@@ -62,11 +59,12 @@ namespace VRGIN.U46.Visuals
         {
             var model = new GameObject("Model").AddComponent<HMDLoader>();
             model.NewParent = PlayArea.transform;
+            DontDestroyOnLoad(model.gameObject);
 
             return model.transform;
         }
 
-        internal static PlayAreaVisualization Create(PlayArea playArea=null)
+        internal static PlayAreaVisualization Create(PlayArea playArea = null)
         {
             var visualization = new GameObject("Play Area Viszalization").AddComponent<PlayAreaVisualization>();
             if (playArea != null)
@@ -81,8 +79,9 @@ namespace VRGIN.U46.Visuals
             base.OnStart();
 
         }
-        
-        protected virtual void OnEnable() {
+
+        protected virtual void OnEnable()
+        {
             PlayArea.BuildMesh();
         }
 
@@ -108,12 +107,14 @@ namespace VRGIN.U46.Visuals
         {
             var steamCam = VRCamera.Instance.SteamCam;
             float cylinderHeight = 2;
-            float playerHeight = steamCam.head.localPosition.y;
+            //float playerHeight = steamCam.head.localPosition.y;
+            float playerHeight = steamCam.transform.localPosition.y;
             float pivot = 1f;
 
             transform.position = Area.Position;
             transform.localScale = Vector3.one * Area.Scale;
-            PlayArea.transform.localPosition = -new Vector3(steamCam.head.transform.localPosition.x, 0, steamCam.head.transform.localPosition.z);
+            //PlayArea.transform.localPosition = -new Vector3(steamCam.head.transform.localPosition.x, 0, steamCam.head.transform.localPosition.z);
+            PlayArea.transform.localPosition = -new Vector3(steamCam.transform.localPosition.x, 0, steamCam.transform.localPosition.z);
             transform.rotation = Quaternion.Euler(0, Area.Rotation, 0);
 
             Indicator.localScale = Vector3.one * 0.1f + Vector3.one * Mathf.Sin(Time.time * 5) * 0.05f;

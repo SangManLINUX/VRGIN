@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using VRGIN.Helpers;
 using VRGIN.Native;
@@ -71,6 +69,7 @@ namespace VRGIN.Core
                 if (!_Instance)
                 {
                     _Instance = new GameObject("VRGIN_GUI").AddComponent<VRGUI>();
+                    DontDestroyOnLoad(_Instance);
 
 #if UNITY_4_5
                     if(VR.Context.ConfineMouse) {
@@ -169,16 +168,18 @@ namespace VRGIN.Core
             _VRGUICamera.clearFlags = CameraClearFlags.SolidColor;
             _VRGUICamera.orthographic = true;
             _VRGUICamera.useOcclusionCulling = false;
-            
+
             _Graphics = typeof(GraphicRegistry).GetField("m_Graphics", BindingFlags.NonPublic | BindingFlags.Instance);
             _Registry = _Graphics.GetValue(GraphicRegistry.instance) as IDictionary;
 
             DontDestroyOnLoad(gameObject);
+
+            SceneManager.sceneLoaded += SceneLoaded;
         }
 
         private bool IsUnprocessed(Canvas c)
         {
-            return c.renderMode == RenderMode.ScreenSpaceOverlay 
+            return c.renderMode == RenderMode.ScreenSpaceOverlay
                 || (c.renderMode == RenderMode.ScreenSpaceCamera && c.worldCamera != _VRGUICamera && c.worldCamera.targetTexture == null);
         }
 
@@ -256,7 +257,16 @@ namespace VRGIN.Core
             }
         }
 
-        protected override void OnLevel(int level)
+        private void SceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (mode == LoadSceneMode.Single)
+            {
+                _CheckedCameras.Clear();
+                _CameraMappings.Clear();
+            }
+        }
+
+        /*protected override void OnLevel(int level)
         {
             base.OnLevel(level);
             
@@ -269,7 +279,7 @@ namespace VRGIN.Core
             //    firstCam.clearFlags = CameraClearFlags.SolidColor;
             //    firstCam.backgroundColor = Color.clear;
             //}
-        }
+        }*/
 
         internal void OnAfterGUI()
         {
@@ -317,7 +327,7 @@ namespace VRGIN.Core
         private void RejudgeAll()
         {
             var cameras = _CheckedCameras.ToList();
-            foreach(var camera in cameras)
+            foreach (var camera in cameras)
             {
                 AddCamera(camera);
             }
@@ -341,18 +351,19 @@ namespace VRGIN.Core
         {
             var removalList = new List<Camera>();
 
-            foreach(var entry in _CameraMappings)
+            foreach (var entry in _CameraMappings)
             {
-                if(!entry.Key)
+                if (!entry.Key)
                 {
                     removalList.Add(entry.Key);
-                } else if(entry.Key.targetTexture != entry.Value.GetTextures().FirstOrDefault())
+                }
+                else if (entry.Key.targetTexture != entry.Value.GetTextures().FirstOrDefault())
                 {
                     entry.Key.targetTexture = entry.Value.GetTextures().FirstOrDefault();
                 }
             }
 
-            foreach(var cam in removalList)
+            foreach (var cam in removalList)
             {
                 _CameraMappings.Remove(cam);
             }
@@ -360,9 +371,9 @@ namespace VRGIN.Core
 
         private IScreenGrabber FindCameraMapping(Camera camera)
         {
-            foreach(var grabber in _ScreenGrabbers)
+            foreach (var grabber in _ScreenGrabbers)
             {
-                if(grabber.Check(camera))
+                if (grabber.Check(camera))
                 {
                     return grabber;
                 }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 using VRGIN.Core;
 
 namespace VRGIN.Helpers
@@ -47,9 +43,11 @@ namespace VRGIN.Helpers
         protected override void OnUpdate()
         {
             base.OnUpdate();
-            if (_RootNode && VR.Camera.SteamCam.head.transform)
+            //if (_RootNode && VR.Camera.SteamCam.head.transform)
+            if (_RootNode && VR.Camera.SteamCam.transform)
             {
-                var camera = VR.Camera.SteamCam.head.transform;
+                //var camera = VR.Camera.SteamCam.head.transform;
+                var camera = VR.Camera.SteamCam.transform;
                 var dir = (camera.position - _RootNode.position).normalized;
 
                 Target.transform.position = camera.position + dir * Offset;

@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace VRGIN.Core
@@ -24,7 +22,9 @@ namespace VRGIN.Core
         /// <summary>
         /// Gets a list of actors in the game. Used frequently.
         /// </summary>
-        public virtual IEnumerable<IActor> Actors { get
+        public virtual IEnumerable<IActor> Actors
+        {
+            get
             {
                 yield break;
             }
@@ -38,12 +38,12 @@ namespace VRGIN.Core
             }
         }
 
-        protected override void OnLevel(int level)
+        /*protected override void OnLevel(int level)
         {
             base.OnLevel(level);
 
             VRLog.Info("Loaded level {0}", level);
-        }
+        }*/
 
         /// <summary>
         /// Finds the first actor who has no head (= is impersonated) or NULL.
@@ -58,13 +58,14 @@ namespace VRGIN.Core
         {
             var actors = Actors.ToList();
             var currentlyImpersonated = FindImpersonatedActor();
-            
-            if(currentlyImpersonated != null)
+
+            if (currentlyImpersonated != null)
             {
                 actors.Remove(currentlyImpersonated);
             }
 
-            return actors.OrderByDescending(actor => Vector3.Dot((actor.Eyes.position - VR.Camera.transform.position).normalized, VR.Camera.SteamCam.head.forward)).FirstOrDefault();
+            //return actors.OrderByDescending(actor => Vector3.Dot((actor.Eyes.position - VR.Camera.transform.position).normalized, VR.Camera.SteamCam.head.forward)).FirstOrDefault();
+            return actors.OrderByDescending(actor => Vector3.Dot((actor.Eyes.position - VR.Camera.transform.position).normalized, VR.Camera.SteamCam.transform.forward)).FirstOrDefault();
 
             //return currentlyImpersonated != null
             //    ? actors[(actors.IndexOf(currentlyImpersonated) + 1) % actors.Count]
@@ -94,10 +95,11 @@ namespace VRGIN.Core
 
         public CameraJudgement JudgeCamera(Camera camera)
         {
-            if(camera.name.Contains("VRGIN") || camera.name == "poseUpdater")
+            if (camera.name.Contains("VRGIN") || camera.name == "poseUpdater")
             {
                 return CameraJudgement.Ignore;
-            } else
+            }
+            else
             {
                 return JudgeCameraInternal(camera);
             }

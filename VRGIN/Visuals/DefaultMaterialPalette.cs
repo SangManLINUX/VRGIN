@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 using VRGIN.Core;
 using VRGIN.Helpers;
 
 namespace VRGIN.Visuals
 {
     public class DefaultMaterialPalette : IMaterialPalette
-    { 
+    {
         public DefaultMaterialPalette()
         {
             Unlit = CreateUnlit();
@@ -31,7 +27,7 @@ namespace VRGIN.Visuals
                 Sprite = UnlitTransparent;
             }
         }
-        
+
         private Material CreateUnlitTransparentCombined()
         {
 #if UNITY_4_5
@@ -70,7 +66,8 @@ namespace VRGIN.Visuals
 
         private Material CreateSprite()
         {
-            return Resources.GetBuiltinResource<Material>("Sprites-Default.mat");
+            //return Resources.GetBuiltinResource<Material>("Sprites-Default.mat");
+            return new Material(Shader.Find("Sprites/Default"));
         }
         public Material Sprite
         {

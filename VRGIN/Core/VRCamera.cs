@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -82,7 +81,7 @@ namespace VRGIN.Core
             base.OnAwake();
 
             var camera = Camera;
-            if(!camera)
+            if (!camera)
             {
                 VRLog.Error("No camera found! {0}", name);
                 Destroy(this);
@@ -101,13 +100,14 @@ namespace VRGIN.Core
             backgroundColor = camera.backgroundColor;
             cullingMask = camera.cullingMask;
         }
-        
+
         public void OnEnable()
         {
             try
             {
                 VR.Camera.RegisterSlave(this);
-            } catch(Exception e)
+            }
+            catch (Exception e)
             {
                 VRLog.Error(e);
             }
@@ -115,10 +115,15 @@ namespace VRGIN.Core
 
         public void OnDisable()
         {
+            if (VR.Quitting)
+            {
+                return;
+            }
             try
             {
                 VR.Camera.UnregisterSlave(this);
-            } catch(Exception e)
+            }
+            catch (Exception e)
             {
                 VRLog.Error(e);
             }
@@ -143,6 +148,7 @@ namespace VRGIN.Core
         public bool useOcclusionCulling { get; private set; }
         public Color backgroundColor { get; private set; }
         public int cullingMask { get; private set; }
+        public bool canBeMainCamera { get; set; }
     }
 
     /// <summary>
@@ -153,7 +159,11 @@ namespace VRGIN.Core
         private delegate void CameraOperation(Camera camera);
 
         private static VRCamera _Instance;
-        public SteamVR_Camera SteamCam { get; private set; }
+        //public SteamVR_Camera SteamCam { get; private set; }
+        //public SteamVR_Behaviour_Pose SteamCam { get; private set; }
+
+        public static GameObject CameraRig { get; private set; }
+
         public Camera Blueprint
         {
             get
@@ -171,7 +181,8 @@ namespace VRGIN.Core
         {
             get
             {
-                return SteamCam.origin;
+                //return SteamCam.origin;
+                return CameraRig.transform;
             }
         }
 
@@ -179,11 +190,13 @@ namespace VRGIN.Core
         {
             get
             {
-                return SteamCam.head;
+                //return SteamCam.head;
+                return SteamCam.transform;
             }
         }
 
-        private Camera _Camera;
+        //private Camera _Camera;
+        public Camera SteamCam;
 
         /// <summary>
         /// Called when the main camera has been initialized.
@@ -204,7 +217,10 @@ namespace VRGIN.Core
             {
                 if (_Instance == null)
                 {
+                    VRLog.Info("VRCamera's Instance is initiated yet, initiating...");
                     _Instance = new GameObject("VRGIN_Camera").AddComponent<AudioListener>().gameObject.AddComponent<VRCamera>();
+                    _Instance.transform.SetParent(CameraRig.transform, false);
+                    DontDestroyOnLoad(_Instance.gameObject);
                 }
                 return _Instance;
             }
@@ -213,32 +229,51 @@ namespace VRGIN.Core
         protected override void OnAwake()
         {
             VRLog.Info("Creating VR Camera");
-            _Camera = gameObject.AddComponent<Camera>();
-            gameObject.AddComponent<SteamVR_Camera>();
-            SteamCam = GetComponent<SteamVR_Camera>();
-            SteamCam.Expand(); // Expand immediately!
+            //_Camera = gameObject.AddComponent<Camera>();
+            //_Camera = Instance.gameObject.AddComponent<Camera>();
+            SteamCam = gameObject.AddComponent<Camera>();
 
-            if (!VR.Settings.MirrorScreen)
+            //var poseBehaviour = gameObject.AddComponent<SteamVR_Behaviour_Pose>();
+            //poseBehaviour.inputSource = SteamVR_Input_Sources.Head;
+
+            //gameObject.AddComponent<SteamVR_Camera>();
+            //SteamCam = GetComponent<SteamVR_Camera>();
+            //SteamCam = gameObject.AddComponent<SteamVR_Behaviour_Pose>();
+            //SteamCam = Instance.gameObject.AddComponent<SteamVR_Behaviour_Pose>();
+            //SteamCam.inputSource = Valve.VR.SteamVR_Input_Sources.Head;
+            //SteamCam.poseAction = Valve.VR.SteamVR_Actions.default_Pose;
+            //SteamCam.Expand(); // Expand immediately!
+
+            /*if (!VR.Settings.MirrorScreen)
             {
-                Destroy(SteamCam.head.GetComponent<SteamVR_GameView>());
-                Destroy(SteamCam.head.GetComponent<Camera>()); // Save GPU power
-            }
+                //Destroy(SteamCam.head.GetComponent<SteamVR_GameView>());
+                Destroy(SteamCam.GetComponent<Camera>()); // Save GPU power
+            }*/
 
             // Set render scale to the value defined by the user
-            SteamVR_Camera.sceneResolutionScale = VR.Settings.RenderScale;
+            //SteamVR_Camera.sceneResolutionScale = VR.Settings.RenderScale;
 
             // Needed for the Camera Modifications mod to work. It's an artifact from DK2 days
-            var legacyAnchor = new GameObject("CenterEyeAnchor");
-            legacyAnchor.transform.SetParent(SteamCam.head);
+            //var legacyAnchor = new GameObject("CenterEyeAnchor");
+            //legacyAnchor.transform.SetParent(SteamCam.head);
+            CameraRig = new GameObject("[CameraRig]");
+            SteamCam.transform.SetParent(CameraRig.transform, false);
 
-            DontDestroyOnLoad(SteamCam.origin.gameObject);
+            DontDetroyRootObject(SteamCam.transform.parent.gameObject);
+        }
+
+        private void DontDetroyRootObject(GameObject go)
+        {
+            while (go.transform.parent != null)
+                go = go.transform.gameObject;
+            DontDestroyOnLoad(go);
         }
 
         /// <summary>
         /// Copies the values of a in-game camera to the VR camera.
         /// </summary>
         /// <param name="blueprint">The camera to copy.</param>
-        public void Copy(Camera blueprint, bool master = false, bool hasOtherConsumers = false)
+        public void Copy(Camera blueprint, bool canBeMain = false, bool hasOtherConsumers = false)
         {
             VRLog.Info("Copying camera: {0}", blueprint ? blueprint.name : "NULL");
 
@@ -248,41 +283,15 @@ namespace VRGIN.Core
                 return;
             }
 
-            if (master && UseNewCamera(blueprint))
+            if (canBeMain && UseNewCamera(blueprint))
             {
-                _Blueprint = blueprint ?? _Camera;
-
-                // Apply to both the head camera and the VR camera
-                ApplyToCameras(targetCamera =>
-                {
-                    targetCamera.nearClipPlane = VR.Context.NearClipPlane;
-                    targetCamera.farClipPlane = Mathf.Max(Blueprint.farClipPlane, MIN_FAR_CLIP_PLANE);
-                    targetCamera.clearFlags = Blueprint.clearFlags == CameraClearFlags.Skybox ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
-                    targetCamera.renderingPath = Blueprint.renderingPath;
-                    targetCamera.clearStencilAfterLightingPass = Blueprint.clearStencilAfterLightingPass;
-                    targetCamera.depthTextureMode = Blueprint.depthTextureMode;
-                    targetCamera.layerCullDistances = Blueprint.layerCullDistances;
-                    targetCamera.layerCullSpherical = Blueprint.layerCullSpherical;
-                    targetCamera.useOcclusionCulling = Blueprint.useOcclusionCulling;
-                    targetCamera.allowHDR = Blueprint.allowHDR;
-
-                    targetCamera.backgroundColor = Blueprint.backgroundColor;
-
-                    var skybox = Blueprint.GetComponent<Skybox>();
-                    if (skybox != null)
-                    {
-                        var vrSkybox = targetCamera.gameObject.GetComponent<Skybox>();
-                        if (vrSkybox == null) vrSkybox = vrSkybox.gameObject.AddComponent<Skybox>();
-
-                        vrSkybox.material = skybox.material;
-                    }
-                });
-
+                ChangeBlueprint(blueprint);
             }
 
-            if(blueprint)
+            if (blueprint)
             {
-                blueprint.gameObject.AddComponent<CameraSlave>();
+                //blueprint.gameObject.AddComponent<CameraSlave>();
+                blueprint.gameObject.AddComponent<CameraSlave>().canBeMainCamera = canBeMain;
 
                 // Highlander principle
                 var listener = blueprint.GetComponent<AudioListener>();
@@ -290,6 +299,9 @@ namespace VRGIN.Core
                 {
                     Destroy(listener);
                 }
+
+                // Prevent Unity from moving this camera around.
+                //blueprint.stereoTargetEye = StereoTargetEyeMask.None;
 
                 if (!hasOtherConsumers && blueprint.targetTexture == null && VR.Interpreter.IsIrrelevantCamera(blueprint))
                 {
@@ -305,7 +317,7 @@ namespace VRGIN.Core
                 }
             }
 
-            if(master)
+            if (canBeMain)
             {
                 // Hook
                 InitializeCamera(this, new InitializeCameraEventArgs(GetComponent<Camera>(), Blueprint));
@@ -314,12 +326,42 @@ namespace VRGIN.Core
             CopiedCamera(this, new CopiedCameraEventArgs(blueprint));
         }
 
+        private void ChangeBlueprint(Camera blueprint)
+        {
+            _Blueprint = blueprint;
+
+            var camera = SteamCam.GetComponent<Camera>();
+            camera.nearClipPlane = VR.Context.NearClipPlane;
+            camera.farClipPlane = Mathf.Max(Blueprint.farClipPlane, MIN_FAR_CLIP_PLANE);
+            camera.clearFlags = Blueprint.clearFlags == CameraClearFlags.Skybox ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
+            camera.renderingPath = Blueprint.renderingPath;
+            camera.clearStencilAfterLightingPass = Blueprint.clearStencilAfterLightingPass;
+            camera.depthTextureMode = Blueprint.depthTextureMode;
+            camera.layerCullDistances = Blueprint.layerCullDistances;
+            camera.layerCullSpherical = Blueprint.layerCullSpherical;
+            camera.useOcclusionCulling = Blueprint.useOcclusionCulling;
+            camera.allowHDR = Blueprint.allowHDR;
+
+            camera.backgroundColor = Blueprint.backgroundColor;
+
+            var skybox = Blueprint.GetComponent<Skybox>();
+            if (skybox != null)
+            {
+                var vrSkybox = camera.gameObject.GetComponent<Skybox>();
+                if (vrSkybox == null) vrSkybox = vrSkybox.gameObject.AddComponent<Skybox>();
+
+                vrSkybox.material = skybox.material;
+            }
+        }
+
+
         private bool UseNewCamera(Camera blueprint)
         {
-            if(_Blueprint && _Blueprint != _Camera && _Blueprint != blueprint)
+            //if(_Blueprint && _Blueprint != _Camera && _Blueprint != blueprint)
+            if (_Blueprint && _Blueprint != SteamCam && _Blueprint != blueprint)
             {
                 // We already have a main camera
-                if(_Blueprint.name == "Main Camera")
+                if (_Blueprint.name == "Main Camera")
                 {
                     VRLog.Info("Using {0} over {1} as main camera", _Blueprint.name, blueprint.name);
                     return false;
@@ -352,17 +394,19 @@ namespace VRGIN.Core
         {
 
             CopyFX(blueprint.gameObject, gameObject, true);
-            FixEffectOrder();  
+            FixEffectOrder();
         }
 
         public void FixEffectOrder()
         {
             if (!SteamCam)
             {
-                SteamCam = GetComponent<SteamVR_Camera>();
+                //SteamCam = GetComponent<SteamVR_Camera>();
+                SteamCam = GetComponent<Camera>();
             }
-            SteamCam.ForceLast();
-            SteamCam = GetComponent<SteamVR_Camera>();
+            //SteamCam.ForceLast();
+            //SteamCam = GetComponent<SteamVR_Camera>();
+            SteamCam = GetComponent<Camera>();
         }
 
         private void CopyFX(GameObject source, GameObject target, bool disabledSourceFx = false)
@@ -387,7 +431,8 @@ namespace VRGIN.Core
                         VRLog.Info("Attached!");
                     }
                     attachedFx.enabled = fx.enabled;
-                } else
+                }
+                else
                 {
                     VRLog.Info("Skipping image effect {0}", fx.GetType().Name);
                 }
@@ -410,10 +455,12 @@ namespace VRGIN.Core
         {
             base.OnUpdate();
 
-            if (SteamCam.origin)
+            //if (SteamCam.origin)
+            if (SteamCam.transform.parent)
             {
                 // Make sure the scale is right
-                SteamCam.origin.localScale = Vector3.one * VR.Settings.IPDScale;
+                //SteamCam.origin.localScale = Vector3.one * VR.Settings.IPDScale;
+                SteamCam.transform.parent.localScale = Vector3.one * VR.Settings.IPDScale;
             }
         }
 

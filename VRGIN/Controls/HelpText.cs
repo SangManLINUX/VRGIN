@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using VRGIN.Core;
 
@@ -30,7 +26,7 @@ namespace VRGIN.Controls
             ht._Target = target;
 
             // Normalize coordinates
-            ht._TextOffset =  textOffset;
+            ht._TextOffset = textOffset;
             ht._LineOffset = lineOffset.HasValue ? lineOffset.Value : Vector3.zero;
 
             var difference = lineOffset.HasValue
@@ -87,7 +83,8 @@ namespace VRGIN.Controls
 
             // Build line renderer
             _Line = gameObject.AddComponent<LineRenderer>();
-            _Line.material = Resources.GetBuiltinResource<Material>("Sprites-Default.mat");
+            //_Line.material = Resources.GetBuiltinResource<Material>("Sprites-Default.mat");
+            _Line.material = new Material(Shader.Find("Sprites/Default"));
             //_Line.material.renderQueue;
             _Line.SetColors(Color.cyan, Color.cyan);
             _Line.useWorldSpace = false;
@@ -109,7 +106,7 @@ namespace VRGIN.Controls
             quad.transform.localRotation = Quaternion.Euler(90, 0, 0);
             quad.transform.localScale = new Vector3(0.05539737f, 0.009849964f, 0);
 
-            if(!S_Material)
+            if (!S_Material)
             {
 
                 S_Material = VRManager.Instance.Context.Materials.Unlit;

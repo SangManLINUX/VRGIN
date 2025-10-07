@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace VRGIN.Controls
 {
@@ -11,6 +7,7 @@ namespace VRGIN.Controls
         public static RightController Create()
         {
             var rightHand = new GameObject("Right Controller").AddComponent<RightController>();
+            rightHand.Tracking.inputSource = Valve.VR.SteamVR_Input_Sources.RightHand;
             //rightHand.ToolIndex = 1; // Start with tool 2
             return rightHand;
         }

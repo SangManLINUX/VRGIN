@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 using Valve.VR;
 using VRGIN.Controls;
 using VRGIN.Core;
@@ -23,6 +19,9 @@ namespace VRGIN.Visuals
 
         public static bool Created { get; private set; }
 
+        public SteamVR_Action_Boolean triggerAction = SteamVR_Input.GetBooleanAction("GrabPinch");
+        public SteamVR_Input_Sources handType = SteamVR_Input_Sources.Any;
+
         public static PlayerCamera Create()
         {
             Created = true;
@@ -37,7 +36,7 @@ namespace VRGIN.Visuals
                 Created = false;
             }
         }
-        
+
         protected void OnEnable()
         {
             VRGUI.Instance.Listen();
@@ -67,7 +66,8 @@ namespace VRGIN.Visuals
 
             // Disable head camera, which is usually used for screen output
             model = new GameObject("Model").AddComponent<SteamVR_RenderModel>();
-            model.transform.SetParent(VR.Camera.SteamCam.head, false);
+            //model.transform.SetParent(VR.Camera.SteamCam.head, false);
+            model.transform.SetParent(VR.Camera.SteamCam.transform, false);
             model.shader = VR.Context.Materials.StandardShader;
             model.SetDeviceIndex((int)OpenVR.k_unTrackedDeviceIndex_Hmd);
             model.gameObject.layer = LayerMask.NameToLayer(VR.Context.InvisibleLayer);
@@ -93,7 +93,8 @@ namespace VRGIN.Visuals
         {
             if (controller)
             {
-                if (!tracking && SteamVR_Controller.Input((int)controller.Tracking.index).GetPressDown(EVRButtonId.k_EButton_SteamVR_Trigger))
+                //if (!tracking && SteamVR_Controller.Input((int)controller.Tracking.index).GetPressDown(EVRButtonId.k_EButton_SteamVR_Trigger))
+                if (!tracking && triggerAction.GetStateDown(handType))
                 {
                     tracking = true;
 
@@ -103,7 +104,8 @@ namespace VRGIN.Visuals
                 }
                 else if (tracking)
                 {
-                    if (SteamVR_Controller.Input((int)controller.Tracking.index).GetPressUp(EVRButtonId.k_EButton_SteamVR_Trigger))
+                    //if (SteamVR_Controller.Input((int)controller.Tracking.index).GetPressUp(EVRButtonId.k_EButton_SteamVR_Trigger))
+                    if (triggerAction.GetStateUp(handType))
                     {
                         tracking = false;
                     }

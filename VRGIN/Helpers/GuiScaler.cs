@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 using VRGIN.Core;
 using VRGIN.Visuals;
 
@@ -94,7 +90,8 @@ namespace VRGIN.U46.Helpers
             var newCenter = _Left.position + newDirection * 0.5f;
 
             // It would probably be easier than that but Quaternions have never been a strength of mine...
-            var inverseOriginRot = Quaternion.Inverse(VR.Camera.SteamCam.origin.rotation);
+            //var inverseOriginRot = Quaternion.Inverse(VR.Camera.SteamCam.origin.rotation);
+            var inverseOriginRot = Quaternion.Inverse(VR.Camera.SteamCam.transform.parent.rotation);
             var avgRot = GetAverageRotation();
             var rotation = (inverseOriginRot * avgRot) * Quaternion.Inverse(inverseOriginRot * _StartRotationController);
 

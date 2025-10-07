@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using VRGIN.Controls.Speech;
+using UnityEngine.SceneManagement;
+using Valve.VR;
 using VRGIN.Modes;
 using WindowsInput;
 
@@ -25,6 +26,7 @@ namespace VRGIN.Core
         //public static SpeechManager Speech { get { return VRManager.Instance.Speech; } }
         public static HMDType HMD { get { return VRManager.Instance.HMD; } }
         public static bool Active { get; set; }
+        public static bool Quitting { get; internal set; }
     }
 
     public enum HMDType
@@ -84,6 +86,7 @@ namespace VRGIN.Core
                 VR.Active = true;
 
                 _Instance = new GameObject("VRGIN_Manager").AddComponent<VRManager>();
+                DontDestroyOnLoad(_Instance.gameObject);
                 _Instance.Context = context;
                 _Instance.Interpreter = _Instance.gameObject.AddComponent<T>();
                 // Makes sure that the GUI is instanciated
@@ -149,8 +152,10 @@ namespace VRGIN.Core
             VRLog.Info("------------------------------------");
             HMD = trackingSystem == "oculus" ? HMDType.Oculus : trackingSystem == "lighthouse" ? HMDType.Vive : HMDType.Other;
 
-            Application.targetFrameRate = 90;
-            Time.fixedDeltaTime = 1 / 90f;
+            //Application.targetFrameRate = 90;
+            //Time.fixedDeltaTime = 1 / 90f;
+            Application.targetFrameRate = (int) SteamVR.instance.hmd_DisplayFrequency;
+            Time.fixedDeltaTime = 1f / SteamVR.instance.hmd_DisplayFrequency;
             Application.runInBackground = true;
 
             GameObject.DontDestroyOnLoad(SteamVR_Render.instance.gameObject);
@@ -158,20 +163,29 @@ namespace VRGIN.Core
 #if UNITY_4_5
             SteamVR_Render.instance.helpSeconds = 0;
 #endif
+            SceneManager.sceneLoaded += SceneLoaded;
         }
+
+        private void SceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (mode == LoadSceneMode.Single)
+                _CheckedCameras.Clear();
+            VRLog.Info($"SceneLoaded:{scene.name}:{mode}");
+        }
+
         protected override void OnStart()
         {
         }
 
-        protected override void OnLevel(int level)
+        /*protected override void OnLevel(int level)
         {
             _CheckedCameras.Clear();
             //StartCoroutine(Load());
-        }
+        }*/
 
         protected override void OnUpdate()
         {
-            foreach(var camera in Camera.allCameras.Except(_CheckedCameras).ToList())
+            foreach (var camera in Camera.allCameras.Except(_CheckedCameras).ToList())
             {
                 _CheckedCameras.Add(camera);
                 var judgement = VR.Interpreter.JudgeCamera(camera);
@@ -196,6 +210,11 @@ namespace VRGIN.Core
                         break;
                 }
             }
+        }
+
+        private void OnApplicationQuit()
+        {
+            VR.Quitting = true;
         }
 
         private void OnControllersCreated(object sender, EventArgs e)

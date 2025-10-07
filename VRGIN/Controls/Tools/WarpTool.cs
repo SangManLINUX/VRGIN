@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 using Valve.VR;
 using VRGIN.Core;
@@ -9,7 +8,7 @@ using VRGIN.Helpers;
 using VRGIN.Modes;
 using VRGIN.U46.Visuals;
 using VRGIN.Visuals;
-using static SteamVR_Controller;
+//using static SteamVR_Controller;
 
 namespace VRGIN.Controls.Tools
 {
@@ -60,6 +59,13 @@ namespace VRGIN.Controls.Tools
         private bool _ScaleInitialized;
         private bool _RotationInitialized;
 
+        public SteamVR_Action_Boolean touchpadClickAction = SteamVR_Input.GetBooleanAction("TouchpadClick");
+        public SteamVR_Action_Vector2 touchpadAxisAction = SteamVR_Input.GetVector2Action("TouchpadMove");
+        public SteamVR_Action_Boolean touchpadTouchAction = SteamVR_Input.GetBooleanAction("TouchpadTouch");
+        public SteamVR_Action_Boolean grabGripAction = SteamVR_Input.GetBooleanAction("GrabGrip");
+        public SteamVR_Action_Boolean triggerAction = SteamVR_Input.GetBooleanAction("GrabPinch");
+        public SteamVR_Input_Sources handType = SteamVR_Input_Sources.Any;
+
         public override Texture2D Image
         {
             get
@@ -89,6 +95,10 @@ namespace VRGIN.Controls.Tools
 
         protected override void OnDestroy()
         {
+            if (VR.Quitting)
+            {
+                return;
+            }
             VRLog.Info("Destroy!");
 
             DestroyImmediate(_Visualization.gameObject);
@@ -126,20 +136,26 @@ namespace VRGIN.Controls.Tools
                 UpdateProspectedArea();
                 _Visualization.UpdatePosition();
             }
-            
+
             ArcRenderer.gameObject.SetActive(visible);
             _Visualization.gameObject.SetActive(visible);
         }
 
         private void ResetPlayArea(PlayArea area)
         {
-            area.Position = VR.Camera.SteamCam.origin.position;
+            //area.Position = VR.Camera.SteamCam.origin.position;
+            area.Position = VR.Camera.SteamCam.transform.parent.position;
             area.Scale = VR.Settings.IPDScale;
-            area.Rotation = VR.Camera.SteamCam.origin.rotation.eulerAngles.y;
+            //area.Rotation = VR.Camera.SteamCam.origin.rotation.eulerAngles.y;
+            area.Rotation = VR.Camera.SteamCam.transform.parent.rotation.eulerAngles.y;
         }
 
         protected override void OnDisable()
         {
+            if (VR.Quitting)
+            {
+                return;
+            }
             base.OnDisable();
 
             EnterState(WarpState.None);
@@ -166,9 +182,11 @@ namespace VRGIN.Controls.Tools
 
         private void CheckRotationalPress()
         {
-            if (Controller.GetPressDown(EVRButtonId.k_EButton_SteamVR_Touchpad))
+            //if (Controller.GetPressDown(EVRButtonId.k_EButton_SteamVR_Touchpad))
+            if (touchpadClickAction.GetStateDown(handType))
             {
-                var v = Controller.GetAxis(EVRButtonId.k_EButton_SteamVR_Touchpad);
+                //var v = Controller.GetAxis(EVRButtonId.k_EButton_SteamVR_Touchpad);
+                var v = touchpadAxisAction.GetAxis(handType);
                 _ProspectedPlayArea.Reset();
                 if (v.x < -0.2f)
                 {
@@ -187,10 +205,12 @@ namespace VRGIN.Controls.Tools
 
             if (State == WarpState.None)
             {
-                var v = Controller.GetAxis(EVRButtonId.k_EButton_SteamVR_Touchpad);
+                //var v = Controller.GetAxis(EVRButtonId.k_EButton_SteamVR_Touchpad);
+                var v = touchpadAxisAction.GetAxis(handType);
                 if (v.magnitude < 0.5f)
                 {
-                    if (Controller.GetTouchDown(EVRButtonId.k_EButton_SteamVR_Touchpad) /*||Controller.GetTouch(EVRButtonId.k_EButton_SteamVR_Touchpad)*/)
+                    //if (Controller.GetTouchDown(EVRButtonId.k_EButton_SteamVR_Touchpad) /*||Controller.GetTouch(EVRButtonId.k_EButton_SteamVR_Touchpad)*/)
+                    if (touchpadTouchAction.GetStateDown(handType))
                     {
                         EnterState(WarpState.Rotating);
                     }
@@ -200,7 +220,8 @@ namespace VRGIN.Controls.Tools
                     CheckRotationalPress();
                 }
 
-                if (Controller.GetPressDown(EVRButtonId.k_EButton_Grip))
+                //if (Controller.GetPressDown(EVRButtonId.k_EButton_Grip))
+                if (grabGripAction.GetStateDown(handType))
                 {
                     EnterState(WarpState.Grabbing);
                 }
@@ -218,7 +239,8 @@ namespace VRGIN.Controls.Tools
 
             if (State == WarpState.Transforming)
             {
-                if (Controller.GetPressUp(EVRButtonId.k_EButton_Axis0))
+                //if (Controller.GetPressUp(EVRButtonId.k_EButton_Axis0))
+                if (touchpadClickAction.GetStateUp(handType))
                 {
                     // Warp!
                     _ProspectedPlayArea.Apply();
@@ -232,19 +254,22 @@ namespace VRGIN.Controls.Tools
 
             if (State == WarpState.None)
             {
-                if (Controller.GetHairTriggerDown())
+                //if (Controller.GetHairTriggerDown())
+                if (triggerAction.GetStateDown(handType))
                 {
                     _TriggerDownTime = Time.unscaledTime;
                 }
                 if (_TriggerDownTime != null)
                 {
-                    if (Controller.GetHairTrigger() && (Time.unscaledTime - _TriggerDownTime) > EXACT_IMPERSONATION_TIME)
+                    //if (Controller.GetHairTrigger() && (Time.unscaledTime - _TriggerDownTime) > EXACT_IMPERSONATION_TIME)
+                    if (triggerAction.GetState(handType) && (Time.unscaledTime - _TriggerDownTime) > EXACT_IMPERSONATION_TIME)
                     {
                         VRManager.Instance.Mode.Impersonate(VR.Interpreter.FindNextActorToImpersonate(),
                             ImpersonationMode.Exactly);
                         _TriggerDownTime = null;
                     }
-                    if (VRManager.Instance.Interpreter.Actors.Any() && Controller.GetHairTriggerUp())
+                    //if (VRManager.Instance.Interpreter.Actors.Any() && Controller.GetHairTriggerUp())
+                    if (VRManager.Instance.Interpreter.Actors.Any() && triggerAction.GetStateUp(handType))
                     {
                         VRManager.Instance.Mode.Impersonate(VR.Interpreter.FindNextActorToImpersonate(),
                             ImpersonationMode.Approximately);
@@ -257,7 +282,8 @@ namespace VRGIN.Controls.Tools
         {
             if (Showing)
             {
-                _Points.Add(Controller.GetAxis(EVRButtonId.k_EButton_Axis0));
+                //_Points.Add(Controller.GetAxis(EVRButtonId.k_EButton_Axis0));
+                _Points.Add(touchpadAxisAction.GetAxis(handType));
 
                 if (_Points.Count > 2)
                 {
@@ -265,12 +291,14 @@ namespace VRGIN.Controls.Tools
                 }
             }
 
-            if (Controller.GetPressDown(EVRButtonId.k_EButton_Axis0))
+            //if (Controller.GetPressDown(EVRButtonId.k_EButton_Axis0))
+            if (touchpadClickAction.GetStateDown(handType))
             {
                 EnterState(WarpState.Transforming);
             }
 
-            if (Controller.GetTouchUp(EVRButtonId.k_EButton_Axis0))
+            //if (Controller.GetTouchUp(EVRButtonId.k_EButton_Axis0))
+            if (touchpadTouchAction.GetStateUp(handType))
             {
                 EnterState(WarpState.None);
             }
@@ -304,24 +332,29 @@ namespace VRGIN.Controls.Tools
                 OtherController.TryAcquireFocus(out _OtherLock);
             }
 
-            if (HasLock() && OtherController.Input.GetPressDown(SECONDARY_SCALE_BUTTON))
+            //if (HasLock() && OtherController.Input.GetPressDown(SECONDARY_SCALE_BUTTON))
+            if (HasLock() && triggerAction.GetStateDown(handType))
             {
                 _ScaleInitialized = false;
             }
 
-            if (HasLock() && OtherController.Input.GetPressDown(SECONDARY_ROTATE_BUTTON))
+            //if (HasLock() && OtherController.Input.GetPressDown(SECONDARY_ROTATE_BUTTON))
+            if (HasLock() && grabGripAction.GetStateDown(handType))
             {
                 _RotationInitialized = false;
             }
 
 
-            if (Controller.GetPress(EVRButtonId.k_EButton_Grip))
+            //if (Controller.GetPress(EVRButtonId.k_EButton_Grip))
+            if (grabGripAction.GetState(handType))
             {
-                if (HasLock() && (OtherController.Input.GetPress(SECONDARY_ROTATE_BUTTON) || OtherController.Input.GetPress(SECONDARY_SCALE_BUTTON)))
+                //if (HasLock() && (OtherController.Input.GetPress(SECONDARY_ROTATE_BUTTON) || OtherController.Input.GetPress(SECONDARY_SCALE_BUTTON)))
+                if (HasLock() && (grabGripAction.GetState(handType) || triggerAction.GetState(handType)))
                 {
                     var newFromTo = (OtherController.transform.position - transform.position).normalized;
 
-                    if (OtherController.Input.GetPress(SECONDARY_SCALE_BUTTON))
+                    //if (OtherController.Input.GetPress(SECONDARY_SCALE_BUTTON))
+                    if (triggerAction.GetState(handType))
                     {
                         InitializeScaleIfNeeded();
                         var controllerDistance = Vector3.Distance(OtherController.transform.position, transform.position) * (_InitialIPD / VR.Settings.IPDScale);
@@ -330,11 +363,13 @@ namespace VRGIN.Controls.Tools
                         _ProspectedPlayArea.Scale = VR.Settings.IPDScale;
                     }
 
-                    if (OtherController.Input.GetPress(SECONDARY_ROTATE_BUTTON))
+                    //if (OtherController.Input.GetPress(SECONDARY_ROTATE_BUTTON))
+                    if (grabGripAction.GetState(handType))
                     {
                         InitializeRotationIfNeeded();
                         var angleDiff = Calculator.Angle(_PrevFromTo, newFromTo) * VR.Settings.RotationMultiplier;
-                        VR.Camera.SteamCam.origin.transform.RotateAround(VR.Camera.Head.position, Vector3.up, angleDiff);// Mathf.Max(1, Controller.velocity.sqrMagnitude) );
+                        //VR.Camera.SteamCam.origin.transform.RotateAround(VR.Camera.Head.position, Vector3.up, angleDiff);// Mathf.Max(1, Controller.velocity.sqrMagnitude) );
+                        VR.Camera.SteamCam.transform.parent.transform.RotateAround(VR.Camera.Head.position, Vector3.up, angleDiff);// Mathf.Max(1, Controller.velocity.sqrMagnitude) );
 
                         _ProspectedPlayArea.Rotation += angleDiff;
                     }
@@ -351,12 +386,15 @@ namespace VRGIN.Controls.Tools
                         var forwardB = diffRot * Vector3.forward;
                         var angleDiff = Calculator.Angle(forwardA, forwardB) * VR.Settings.RotationMultiplier;
 
-                        VR.Camera.SteamCam.origin.transform.position -= diffPos;
+                        //VR.Camera.SteamCam.origin.transform.position -= diffPos;
+                        VR.Camera.SteamCam.transform.parent.transform.position -= diffPos;
                         _ProspectedPlayArea.Height -= diffPos.y;
                         //VRLog.Info("Rotate: {0}", NormalizeAngle(diffRot.eulerAngles.y));
-                        if (!VR.Settings.GrabRotationImmediateMode && Controller.GetPress(ButtonMask.Trigger | ButtonMask.Touchpad))
+                        //if (!VR.Settings.GrabRotationImmediateMode && Controller.GetPress(ButtonMask.Trigger | ButtonMask.Touchpad))
+                        if (!VR.Settings.GrabRotationImmediateMode && (triggerAction.GetState(handType) || touchpadClickAction.GetState(handType)))
                         {
-                            VR.Camera.SteamCam.origin.transform.RotateAround(VR.Camera.Head.position, Vector3.up, -angleDiff);
+                            //VR.Camera.SteamCam.origin.transform.RotateAround(VR.Camera.Head.position, Vector3.up, -angleDiff);
+                            VR.Camera.SteamCam.transform.parent.transform.RotateAround(VR.Camera.Head.position, Vector3.up, -angleDiff);
                             _ProspectedPlayArea.Rotation -= angleDiff;
                         }
 
@@ -364,7 +402,8 @@ namespace VRGIN.Controls.Tools
                     }
                 }
             }
-            if (Controller.GetPressUp(EVRButtonId.k_EButton_Grip))
+            //if (Controller.GetPressUp(EVRButtonId.k_EButton_Grip))
+            if (grabGripAction.GetStateUp(handType))
             {
                 EnterState(WarpState.None);
                 if (Time.unscaledTime - _GripStartTime < GRIP_TIME_THRESHOLD)
@@ -374,15 +413,17 @@ namespace VRGIN.Controls.Tools
                     _ProspectedPlayArea.Scale = _IPDOnStart;
                 }
             }
-            
-            if(VR.Settings.GrabRotationImmediateMode && Controller.GetPressUp(ButtonMask.Trigger | ButtonMask.Touchpad))
+
+            //if(VR.Settings.GrabRotationImmediateMode && Controller.GetPressUp(ButtonMask.Trigger | ButtonMask.Touchpad))
+            if (VR.Settings.GrabRotationImmediateMode && (triggerAction.GetStateUp(handType) || touchpadClickAction.GetStateUp(handType)))
             {
                 // Rotate
                 var originalLookDirection = Vector3.ProjectOnPlane(transform.position - VR.Camera.Head.position, Vector3.up).normalized;
                 var currentLookDirection = Vector3.ProjectOnPlane(VR.Camera.Head.forward, Vector3.up).normalized;
                 var angleDeg = Calculator.Angle(originalLookDirection, currentLookDirection);
 
-                VR.Camera.SteamCam.origin.transform.RotateAround(VR.Camera.Head.position, Vector3.up, angleDeg);
+                //VR.Camera.SteamCam.origin.transform.RotateAround(VR.Camera.Head.position, Vector3.up, angleDeg);
+                VR.Camera.SteamCam.transform.parent.transform.RotateAround(VR.Camera.Head.position, Vector3.up, angleDeg);
                 _ProspectedPlayArea.Rotation = angleDeg;
             }
 

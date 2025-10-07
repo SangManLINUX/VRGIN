@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 using Valve.VR;
-using VRGIN.Controls;
 using VRGIN.Controls.Tools;
 using VRGIN.Core;
 
@@ -30,8 +28,10 @@ namespace VRGIN.Modes
         {
             base.OnStart();
 
-            VR.Camera.SteamCam.origin.position = Vector3.zero;
-            VR.Camera.SteamCam.origin.rotation = Quaternion.identity;
+            //VR.Camera.SteamCam.origin.position = Vector3.zero;
+            //VR.Camera.SteamCam.origin.rotation = Quaternion.identity;
+            VR.Camera.SteamCam.transform.parent.position = Vector3.zero;
+            VR.Camera.SteamCam.transform.parent.rotation = Quaternion.identity;
 
         }
 
@@ -47,8 +47,10 @@ namespace VRGIN.Modes
 
         protected virtual void SyncCameras()
         {
-            VRCamera.Instance.Blueprint.transform.position = VR.Camera.SteamCam.head.position;
-            VRCamera.Instance.Blueprint.transform.rotation = VR.Camera.SteamCam.head.rotation;
+            //VRCamera.Instance.Blueprint.transform.position = VR.Camera.SteamCam.head.position;
+            //VRCamera.Instance.Blueprint.transform.rotation = VR.Camera.SteamCam.head.rotation;
+            VRCamera.Instance.Blueprint.transform.position = VR.Camera.SteamCam.transform.position;
+            VRCamera.Instance.Blueprint.transform.rotation = VR.Camera.SteamCam.transform.rotation;
         }
 
         public override IEnumerable<Type> Tools

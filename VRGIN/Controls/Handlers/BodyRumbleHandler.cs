@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 using VRGIN.Core;
 using VRGIN.Helpers;
 
@@ -19,17 +15,18 @@ namespace VRGIN.Controls.Handlers
             base.OnStart();
 
             _Controller = GetComponent<Controller>();
-            _Rumble = new VelocityRumble(
+            /*_Rumble = new VelocityRumble(
                 SteamVR_Controller.Input((int)_Controller.Tracking.index),
-                            30, 10, 3f, 1500, 10);
+                            30, 10, 3f, 1500, 10);*/
+            _Rumble = new VelocityRumble(30, 10, 3f, 1500, 10);
         }
 
-        protected override void OnLevel(int level)
+        /*protected override void OnLevel(int level)
         {
             base.OnLevel(level);
             OnStop();
 
-        }
+        }*/
 
         protected void OnDisable()
         {
@@ -40,7 +37,7 @@ namespace VRGIN.Controls.Handlers
         protected override void OnUpdate()
         {
             base.OnUpdate();
-            _Rumble.Device = SteamVR_Controller.Input((int)_Controller.Tracking.index);
+            //_Rumble.Device = SteamVR_Controller.Input((int)_Controller.Tracking.index);
         }
 
         protected void OnTriggerEnter(Collider collider)

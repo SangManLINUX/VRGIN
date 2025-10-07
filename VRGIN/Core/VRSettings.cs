@@ -4,11 +4,9 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using UnityEngine;
-using VRGIN.Controls;
 using VRGIN.Helpers;
 using static VRGIN.Visuals.GUIMonitor;
 
@@ -128,11 +126,12 @@ namespace VRGIN.Core
         private float _RotationMultiplier = 1f;
 
         //[XmlElement("VRGIN.Shortcuts")]
+        [XmlIgnore]
         [XmlComment("Shortcuts used by VRGIN. Refer to https://docs.unity3d.com/ScriptReference/KeyCode.html for a list of available keys.")]
         public virtual Shortcuts Shortcuts { get { return _Shortcuts; } protected set { _Shortcuts = value; } }
         private Shortcuts _Shortcuts = new Shortcuts();
 
-
+        [XmlIgnore]
         public CaptureConfig Capture { get { return _CaptureConfig; } protected set { _CaptureConfig = value; } }
         private CaptureConfig _CaptureConfig = new CaptureConfig();
 
@@ -152,7 +151,7 @@ namespace VRGIN.Core
 
             _OldSettings = this.MemberwiseClone() as VRSettings;
         }
-        
+
         /// <summary>
         /// Triggers a PropertyChanged event and notifies the listeners.
         /// </summary>
@@ -176,7 +175,7 @@ namespace VRGIN.Core
         /// <param name="path"></param>
         public virtual void Save(string path)
         {
-            if(path != null)
+            if (path != null)
             {
                 var serializer = new XmlSerializer(GetType());
                 using (var stream = File.OpenWrite(path))
@@ -197,13 +196,13 @@ namespace VRGIN.Core
         {
             // Add comments
             var doc = XDocument.Load(path);
-            foreach(var element in doc.Root.Elements())
+            foreach (var element in doc.Root.Elements())
             {
                 var property = FindProperty(element.Name.LocalName);
-                if(property != null)
+                if (property != null)
                 {
                     var commentAttribute = property.GetCustomAttributes(typeof(XmlCommentAttribute), true).FirstOrDefault() as XmlCommentAttribute;
-                    if(commentAttribute != null)
+                    if (commentAttribute != null)
                     {
                         element.AddBeforeSelf(new XComment(" " + commentAttribute.Value + " "));
                     }
@@ -245,7 +244,8 @@ namespace VRGIN.Core
                         return settings;
                     }
                 }
-            } catch(Exception e)
+            }
+            catch (Exception e)
             {
                 VRLog.Error("Fatal exception occured while loading XML! (Make sure System.Xml exists!) {0}", e);
                 throw e;
@@ -259,7 +259,7 @@ namespace VRGIN.Core
         /// <param name="handler"></param>
         public void AddListener(string property, EventHandler<PropertyChangedEventArgs> handler)
         {
-            if(!_Listeners.ContainsKey(property))
+            if (!_Listeners.ContainsKey(property))
             {
                 _Listeners[property] = new List<EventHandler<PropertyChangedEventArgs>>();
             }
@@ -332,10 +332,10 @@ namespace VRGIN.Core
                     }
                 }
             }
-        } 
-        
+        }
+
     }
-    
+
     public class Shortcuts
     {
         public XmlKeyStroke ResetView = new XmlKeyStroke("F12");
@@ -361,7 +361,7 @@ namespace VRGIN.Core
         [XmlElement("GUI.DecreaseDistance")]
         public XmlKeyStroke GUIDecreaseDistance = new XmlKeyStroke("Shift + KeypadPlus", KeyMode.Press);
         [XmlElement("GUI.RotateRight")]
-        public XmlKeyStroke GUIRotateRight= new XmlKeyStroke("Ctrl + Shift + KeypadMinus", KeyMode.Press);
+        public XmlKeyStroke GUIRotateRight = new XmlKeyStroke("Ctrl + Shift + KeypadMinus", KeyMode.Press);
         [XmlElement("GUI.RotateLeft")]
         public XmlKeyStroke GUIRotateLeft = new XmlKeyStroke("Ctrl + Shift + KeypadPlus", KeyMode.Press);
         [XmlElement("GUI.ChangeProjection")]
@@ -384,10 +384,12 @@ namespace VRGIN.Core
     public class XmlKeyStroke
     {
         [XmlAttribute("on")]
-        public KeyMode CheckMode { get; private set; }
-        
+        //public KeyMode CheckMode { get; private set; }
+        public KeyMode CheckMode { get; set; }
+
         [XmlText]
-        public string Keys { get; private set; }
+        //public string Keys { get; private set; }
+        public string Keys { get; set; }
 
         public XmlKeyStroke()
         {
@@ -404,7 +406,7 @@ namespace VRGIN.Core
             return Keys.Split(',', '|').Select(part => new KeyStroke(part.Trim())).ToArray();
         }
     }
-    
+
 
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
     public class XmlCommentAttribute : Attribute

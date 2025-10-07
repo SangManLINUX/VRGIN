@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
-using VRGIN.Core;
+using Valve.VR;
 
 namespace VRGIN.Helpers
 {
@@ -125,6 +122,9 @@ namespace VRGIN.Helpers
 
     public class VelocityRumble : IRumbleSession
     {
+        private SteamVR_Action_Pose handPose = SteamVR_Actions.default_Pose;
+        private SteamVR_Input_Sources inputSource = SteamVR_Input_Sources.Any;
+
         public bool IsOver
         {
             get; set;
@@ -134,7 +134,9 @@ namespace VRGIN.Helpers
         {
             get
             {
-                return (ushort)(_MicroDuration + (Device.velocity.magnitude / _MaxVelocity) * (_MaxMicroDuration - _MicroDuration));
+                //return (ushort)(_MicroDuration + (Device.velocity.magnitude / _MaxVelocity) * (_MaxMicroDuration - _MicroDuration));
+                var currentPose = handPose.GetVelocity(inputSource);
+                return (ushort)(_MicroDuration + (currentPose.magnitude / _MaxVelocity) * (_MaxMicroDuration - _MicroDuration));
             }
         }
 
@@ -142,7 +144,9 @@ namespace VRGIN.Helpers
         {
             get
             {
-                return Mathf.Lerp(_MilliInterval, _MaxMilliInterval, Device.velocity.magnitude / _MaxVelocity);
+                //return Mathf.Lerp(_MilliInterval, _MaxMilliInterval, Device.velocity.magnitude / _MaxVelocity);
+                var currentPose = handPose.GetVelocity(inputSource);
+                return Mathf.Lerp(_MilliInterval, _MaxMilliInterval, currentPose.magnitude / _MaxVelocity);
             }
         }
 
@@ -152,11 +156,12 @@ namespace VRGIN.Helpers
         readonly ushort _MaxMicroDuration;
         readonly float _MaxMilliInterval;
 
-        public SteamVR_Controller.Device Device { get; set; }
+        //public SteamVR_Controller.Device Device { get; set; }
 
-        public VelocityRumble(SteamVR_Controller.Device device, ushort microDuration, float milliInterval, float maxVelocity, ushort maxMicroDuration, float maxMilliInterval)
+        //public VelocityRumble(SteamVR_Controller.Device device, ushort microDuration, float milliInterval, float maxVelocity, ushort maxMicroDuration, float maxMilliInterval)
+        public VelocityRumble(ushort microDuration, float milliInterval, float maxVelocity, ushort maxMicroDuration, float maxMilliInterval)
         {
-            Device = device;
+            //Device = device;
             this._MaxMilliInterval = maxMilliInterval;
             this._MaxMicroDuration = maxMicroDuration;
             this._MaxVelocity = maxVelocity;

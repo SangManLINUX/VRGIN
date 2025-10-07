@@ -1,16 +1,11 @@
-﻿//using Leap.Unity;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 using Valve.VR;
 using VRGIN.Controls;
-//using VRGIN.Controls.LeapMotion;
-using VRGIN.Controls.Speech;
 using VRGIN.Core;
 using VRGIN.Helpers;
-//using VRGIN.U46.Controls.Leap;
 using VRGIN.Visuals;
 
 namespace VRGIN.Modes
@@ -40,23 +35,33 @@ namespace VRGIN.Modes
 
         public virtual void MoveToPosition(Vector3 targetPosition, bool ignoreHeight = true)
         {
-            MoveToPosition(targetPosition, VR.Camera.SteamCam.head.rotation, ignoreHeight);
+            //MoveToPosition(targetPosition, VR.Camera.SteamCam.head.rotation, ignoreHeight);
+            MoveToPosition(targetPosition, VR.Camera.SteamCam.transform.rotation, ignoreHeight);
         }
 
         public virtual void MoveToPosition(Vector3 targetPosition, Quaternion rotation = default(Quaternion), bool ignoreHeight = true)
         {
-            var targetForward = Calculator.GetForwardVector(rotation);
-            var currentForward = Calculator.GetForwardVector(VR.Camera.SteamCam.head.rotation);
+            /*var targetForward = Calculator.GetForwardVector(rotation);
+            //var currentForward = Calculator.GetForwardVector(VR.Camera.SteamCam.head.rotation);
+            var currentForward = Calculator.GetForwardVector(VR.Camera.SteamCam.transform.rotation);
 
             VR.Camera.SteamCam.origin.rotation *= Quaternion.FromToRotation(currentForward, targetForward);
 
             float targetY = ignoreHeight ? 0 : targetPosition.y;
-            float myY = ignoreHeight ? 0 : VR.Camera.SteamCam.head.position.y;
+            //float myY = ignoreHeight ? 0 : VR.Camera.SteamCam.head.position.y;
+            float myY = ignoreHeight ? 0 : VR.Camera.SteamCam.transform.position.y;
             targetPosition = new Vector3(targetPosition.x, targetY, targetPosition.z);
-            var myPosition = new Vector3(VR.Camera.SteamCam.head.position.x, myY, VR.Camera.SteamCam.head.position.z);
-            VR.Camera.SteamCam.origin.position += (targetPosition - myPosition);
+            //var myPosition = new Vector3(VR.Camera.SteamCam.head.position.x, myY, VR.Camera.SteamCam.head.position.z);
+            var myPosition = new Vector3(VR.Camera.SteamCam.transform.position.x, myY, VR.Camera.SteamCam.transform.position.z);
+            VR.Camera.SteamCam.origin.position += (targetPosition - myPosition);*/
+
+            //VR.Camera.SteamCam.origin.rotation = rotation;
+            //VR.Camera.SteamCam.origin.position = targetPosition;
+            VR.Camera.SteamCam.transform.parent.rotation = rotation;
+            VR.Camera.SteamCam.transform.parent.position = targetPosition;
+
         }
-        
+
         public abstract ETrackingUniverseOrigin TrackingOrigin { get; }
 
         /// <summary>
@@ -92,14 +97,14 @@ namespace VRGIN.Modes
 
         protected IEnumerable<IShortcut> Shortcuts { get; private set; }
 
-        protected SteamVR_ControllerManager ControllerManager;
+        //protected SteamVR_ControllerManager ControllerManager;
         internal event EventHandler<EventArgs> ControllersCreated = delegate { };
 
         protected override void OnStart()
         {
             CreateControllers();
             Shortcuts = CreateShortcuts();
-            SteamVR_Render.instance.trackingSpace = TrackingOrigin;
+            //SteamVR_Render.instance.trackingSpace = TrackingOrigin;
 
             InitializeScreenCapture();
         }
@@ -131,9 +136,10 @@ namespace VRGIN.Modes
         {
             var steamCam = VR.Camera.SteamCam;
 
-            steamCam.origin.gameObject.SetActive(false);
+            //steamCam.origin.gameObject.SetActive(false);
+            steamCam.transform.parent.gameObject.SetActive(false);
             {
-                ControllerManager = steamCam.origin.gameObject.AddComponent<SteamVR_ControllerManager>();
+                //ControllerManager = steamCam.origin.gameObject.AddComponent<SteamVR_ControllerManager>();
 
                 //if (VR.Settings.Leap)
                 //{
@@ -145,18 +151,28 @@ namespace VRGIN.Modes
                 //}
 
                 Left = CreateLeftController();
-                Left.transform.SetParent(steamCam.origin, false);
+                //Left.transform.SetParent(steamCam.origin, false);
+                Left.transform.SetParent(steamCam.transform.parent, false);
+                Left.Tracking.origin = VR.Camera.Origin.transform;
 
                 Right = CreateRightController();
-                Right.transform.SetParent(steamCam.origin, false);
+                //Right.transform.SetParent(steamCam.origin, false);
+                Right.transform.SetParent(steamCam.transform.parent, false);
+                Right.Tracking.origin = VR.Camera.Origin.transform;
 
                 Left.Other = Right;
                 Right.Other = Left;
 
-                ControllerManager.left = Left.gameObject;
-                ControllerManager.right = Right.gameObject;
+                //ControllerManager.left = Left.gameObject;
+                //ControllerManager.right = Right.gameObject;
+
+                Left.gameObject.SetActive(true);
+                Left.Model.gameObject.SetActive(true);
+                Right.gameObject.SetActive(true);
+                Right.Model.gameObject.SetActive(true);
             }
-            steamCam.origin.gameObject.SetActive(true);
+            //steamCam.origin.gameObject.SetActive(true);
+            steamCam.transform.parent.gameObject.SetActive(true);
 
             VRLog.Info("---- Initialize left tools");
             InitializeTools(Left, true);
@@ -343,7 +359,7 @@ namespace VRGIN.Modes
 
         public virtual void OnDestroy()
         {
-            Destroy(ControllerManager);
+            //Destroy(ControllerManager);
             Destroy(Left);
             Destroy(Right);
 
@@ -461,7 +477,7 @@ namespace VRGIN.Modes
         protected override void OnUpdate()
         {
             base.OnUpdate();
-            SteamVR_Render.instance.trackingSpace = TrackingOrigin;
+            //SteamVR_Render.instance.trackingSpace = TrackingOrigin;
 
             // Update head visibility
 
@@ -479,11 +495,13 @@ namespace VRGIN.Modes
                         var hisPos = actor.Eyes.position;
                         var hisForward = actor.Eyes.forward;
 
-                        var myPos = steamCam.head.position;
-                        var myForward = steamCam.head.forward;
+                        //var myPos = steamCam.head.position;
+                        //var myForward = steamCam.head.forward;
+                        var myPos = steamCam.transform.position;
+                        var myForward = steamCam.transform.forward;
 
                         VRLog.Debug("Actor #{0} -- He: {1} -> {2} | Me: {3} -> {4}", i, hisPos, hisForward, myPos, myForward);
-                        if (Vector3.Distance(hisPos, myPos) * VR.Context.UnitToMeter <  0.15f && Vector3.Dot(hisForward, myForward) > 0.6f)
+                        if (Vector3.Distance(hisPos, myPos) * VR.Context.UnitToMeter < 0.15f && Vector3.Dot(hisForward, myForward) > 0.6f)
                         {
                             actor.HasHead = false;
                         }
@@ -491,7 +509,8 @@ namespace VRGIN.Modes
                 }
                 else
                 {
-                    if (Vector3.Distance(actor.Eyes.position, steamCam.head.position) * VR.Context.UnitToMeter > 0.3f)
+                    //if (Vector3.Distance(actor.Eyes.position, steamCam.head.position) * VR.Context.UnitToMeter > 0.3f)
+                    if (Vector3.Distance(actor.Eyes.position, steamCam.transform.position) * VR.Context.UnitToMeter > 0.3f)
                     {
                         actor.HasHead = true;
                     }
@@ -514,7 +533,7 @@ namespace VRGIN.Modes
         {
             if (!_ControllerFound)
             {
-				uint index = (uint)idx;
+                uint index = (uint)idx;
                 VRLog.Info("Device connected: {0}", index);
 
                 if (connected && index > OpenVR.k_unTrackedDeviceIndex_Hmd)

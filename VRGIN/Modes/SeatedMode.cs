@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Text;
-//using Leap;
 using UnityEngine;
 using Valve.VR;
 using VRGIN.Controls;
 using VRGIN.Controls.Tools;
 using VRGIN.Core;
-using VRGIN.Helpers;
 using VRGIN.Visuals;
 using static VRGIN.Visuals.GUIMonitor;
 
@@ -33,17 +29,19 @@ namespace VRGIN.Modes
         protected override void OnStart()
         {
             base.OnStart();
-            
+
             if (_IsFirstStart)
             {
-                VR.Camera.SteamCam.origin.transform.position = new Vector3(0, 0, 0);
+                //VR.Camera.SteamCam.origin.transform.position = new Vector3(0, 0, 0);
+                VR.Camera.SteamCam.transform.parent.transform.position = new Vector3(0, 0, 0);
                 Recenter();
                 _IsFirstStart = false;
             }
 
             Monitor = GUIMonitor.Create();
-            Monitor.transform.SetParent(VR.Camera.SteamCam.origin, false);
-            
+            //Monitor.transform.SetParent(VR.Camera.SteamCam.origin, false);
+            Monitor.transform.SetParent(VR.Camera.SteamCam.transform.parent, false);
+
             OpenVR.ChaperoneSetup.SetWorkingPlayAreaSize(1000, 1000); // Make it really big
             //OpenVR.Chaperone.ForceBoundsVisible(false);
         }
@@ -89,17 +87,20 @@ namespace VRGIN.Modes
                     }
                 }
 
-                VR.Camera.SteamCam.origin.transform.position = VR.Camera.Blueprint.transform.position;
+                //VR.Camera.SteamCam.origin.transform.position = VR.Camera.Blueprint.transform.position;
+                VR.Camera.SteamCam.transform.parent.transform.position = VR.Camera.Blueprint.transform.position;
 
                 if ((VR.Settings.PitchLock && LockTarget == null))
                 {
-                    VR.Camera.SteamCam.origin.transform.eulerAngles = new Vector3(0, VR.Camera.Blueprint.transform.eulerAngles.y, 0);
+                    //VR.Camera.SteamCam.origin.transform.eulerAngles = new Vector3(0, VR.Camera.Blueprint.transform.eulerAngles.y, 0);
+                    VR.Camera.SteamCam.transform.parent.transform.eulerAngles = new Vector3(0, VR.Camera.Blueprint.transform.eulerAngles.y, 0);
 
                     CorrectRotationLock();
                 }
                 else
                 {
-                    VR.Camera.SteamCam.origin.transform.rotation = VR.Camera.Blueprint.transform.rotation;
+                    //VR.Camera.SteamCam.origin.transform.rotation = VR.Camera.Blueprint.transform.rotation;
+                    VR.Camera.SteamCam.transform.parent.transform.rotation = VR.Camera.Blueprint.transform.rotation;
                 }
             }
         }
@@ -180,7 +181,8 @@ namespace VRGIN.Modes
         public void Recenter()
         {
             VRLog.Info("Recenter");
-            OpenVR.System.ResetSeatedZeroPose();
+            //OpenVR.System.ResetSeatedZeroPose();
+            OpenVR.Chaperone.ResetZeroPose(ETrackingUniverseOrigin.TrackingUniverseSeated);
         }
 
         protected Action MoveGUI(float speed)

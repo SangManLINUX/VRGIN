@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 using VRGIN.Core;
-using VRGIN.Modes;
 
 namespace VRGIN.Visuals
 {
@@ -45,8 +43,8 @@ namespace VRGIN.Visuals
             VRLog.Info("Create GUI");
             var gui = GameObject.CreatePrimitive(PrimitiveType.Quad).AddComponent<GUIQuad>();
             gui.name = "GUIQuad";
-            
-            if(source != VR.GUI)
+
+            if (source != VR.GUI)
             {
                 gui.gameObject.SetActive(false);
                 gui._Source = source;
@@ -87,6 +85,10 @@ namespace VRGIN.Visuals
 
         protected virtual void OnDisable()
         {
+            if (VR.Quitting)
+            {
+                return;
+            }
             if (IsGUISource())
             {
                 VRLog.Info("Stop listening to GUI ({0})", name);

@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 using Valve.VR;
-using VRGIN.Controls;
 using VRGIN.Controls.Tools;
 using VRGIN.Core;
 using VRGIN.Native;
 using VRGIN.Visuals;
-using static VRGIN.Native.WindowsInterop;
 
 namespace VRGIN.Controls.Handlers
 {
@@ -29,6 +25,10 @@ namespace VRGIN.Controls.Handlers
         ResizeHandler _ResizeHandler;
         private Vector3 _ScaleVector;
 
+        public SteamVR_Action_Boolean grabPinchAction = SteamVR_Input.GetBooleanAction("GrabPinch");
+        public SteamVR_Action_Boolean grabGripAction = SteamVR_Input.GetBooleanAction("GrabGrip");
+        public SteamVR_Input_Sources handType = SteamVR_Input_Sources.Any;
+
         protected override void OnStart()
         {
             base.OnStart();
@@ -42,7 +42,7 @@ namespace VRGIN.Controls.Handlers
         {
             try
             {
-                if(!_Controller) _Controller = GetComponent<Controller>();
+                if (!_Controller) _Controller = GetComponent<Controller>();
                 var attachPosition = _Controller.FindAttachPosition("tip");
 
                 if (!attachPosition)
@@ -52,7 +52,8 @@ namespace VRGIN.Controls.Handlers
                 }
                 Laser = new GameObject().AddComponent<LineRenderer>();
                 Laser.transform.SetParent(attachPosition, false);
-                Laser.material = Resources.GetBuiltinResource<Material>("Sprites-Default.mat");
+                //Laser.material = Resources.GetBuiltinResource<Material>("Sprites-Default.mat");
+                Laser.material = new Material(Shader.Find("Sprites/Default"));
                 Laser.material.renderQueue += 5000;
                 Laser.SetColors(Color.cyan, Color.cyan);
 
@@ -74,13 +75,13 @@ namespace VRGIN.Controls.Handlers
         /// <summary>
         /// Gets the attached controller input object.
         /// </summary>
-        protected SteamVR_Controller.Device Device
+        /*protected SteamVR_Controller.Device Device
         {
             get
             {
                 return SteamVR_Controller.Input((int)_Controller.Tracking.index);
             }
-        }
+        }*/
 
         protected override void OnUpdate()
         {
@@ -155,24 +156,28 @@ namespace VRGIN.Controls.Handlers
 
                 if (!IsResizing)
                 {
-                    if (Device.GetPressDown(EVRButtonId.k_EButton_SteamVR_Trigger))
+                    //if (Device.GetPressDown(EVRButtonId.k_EButton_SteamVR_Trigger))
+                    if (grabPinchAction.GetStateDown(handType))
                     {
                         IsPressing = true;
                         VR.Input.Mouse.LeftButtonDown();
                         mouseDownPosition = Vector2.Scale(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y), _ScaleVector);
                     }
-                    if (Device.GetPress(EVRButtonId.k_EButton_SteamVR_Trigger))
+                    //if (Device.GetPress(EVRButtonId.k_EButton_SteamVR_Trigger))
+                    if (grabPinchAction.GetState(handType))
                     {
                         IsPressing = true;
                     }
-                    if (Device.GetPressUp(EVRButtonId.k_EButton_SteamVR_Trigger))
+                    //if (Device.GetPressUp(EVRButtonId.k_EButton_SteamVR_Trigger))
+                    if (grabPinchAction.GetStateUp(handType))
                     {
                         IsPressing = true;
                         VR.Input.Mouse.LeftButtonUp();
                         mouseDownPosition = null;
                     }
 
-                    if (Device.GetPressUp(EVRButtonId.k_EButton_Grip))
+                    //if (Device.GetPressUp(EVRButtonId.k_EButton_Grip))
+                    if (grabGripAction.GetStateUp(handType))
                     {
                         var menuTool = _Controller.GetComponent<MenuTool>();
                         if (menuTool && !menuTool.Gui)
@@ -340,6 +345,10 @@ namespace VRGIN.Controls.Handlers
             Quaternion _StartRotationController;
             Vector3? _OffsetFromCenter;
 
+            public SteamVR_Action_Boolean grabPinchAction = SteamVR_Input.GetBooleanAction("GrabPinch");
+            //public SteamVR_Action_Boolean grabGripAction = SteamVR_Input.GetBooleanAction("GrabGrip");
+            //public SteamVR_Input_Sources handType = SteamVR_Input_Sources.Any;
+
             public bool IsDragging { get; private set; }
             protected override void OnStart()
             {
@@ -350,8 +359,10 @@ namespace VRGIN.Controls.Handlers
             protected override void OnUpdate()
             {
                 base.OnUpdate();
-                IsDragging = GetDevice(VR.Mode.Left).GetPress(EVRButtonId.k_EButton_SteamVR_Trigger) &&
-                       GetDevice(VR.Mode.Right).GetPress(EVRButtonId.k_EButton_SteamVR_Trigger);
+                /*IsDragging = GetDevice(VR.Mode.Left).GetPress(EVRButtonId.k_EButton_SteamVR_Trigger) &&
+                       GetDevice(VR.Mode.Right).GetPress(EVRButtonId.k_EButton_SteamVR_Trigger);*/
+                IsDragging = grabPinchAction.GetState(SteamVR_Input_Sources.LeftHand) &&
+                       grabPinchAction.GetState(SteamVR_Input_Sources.RightHand);
 
                 if (IsDragging)
                 {
@@ -368,7 +379,8 @@ namespace VRGIN.Controls.Handlers
                     var newCenter = newLeft + newDirection * 0.5f;
 
                     // It would probably be easier than that but Quaternions have never been a strength of mine...
-                    var inverseOriginRot = Quaternion.Inverse(VR.Camera.SteamCam.origin.rotation);
+                    //var inverseOriginRot = Quaternion.Inverse(VR.Camera.SteamCam.origin.rotation);
+                    var inverseOriginRot = Quaternion.Inverse(VR.Camera.SteamCam.transform.parent.rotation);
                     var avgRot = GetAverageRotation();
                     var rotation = (inverseOriginRot * avgRot) * Quaternion.Inverse(inverseOriginRot * _StartRotationController);
 
@@ -402,7 +414,7 @@ namespace VRGIN.Controls.Handlers
                 _StartRotation = _Gui.transform.localRotation;
                 _StartPosition = _Gui.transform.position;
                 _StartRotationController = GetAverageRotation();
-                
+
                 var originalDistance = Vector3.Distance(_StartLeft.Value, _StartRight.Value);
                 var originalDirection = _StartRight.Value - _StartLeft.Value;
                 var originalCenter = _StartLeft.Value + originalDirection * 0.5f;
@@ -410,10 +422,10 @@ namespace VRGIN.Controls.Handlers
             }
 
 
-            private SteamVR_Controller.Device GetDevice(Controller controller)
+            /*private SteamVR_Controller.Device GetDevice(Controller controller)
             {
                 return SteamVR_Controller.Input((int)controller.Tracking.index);
-            }
+            }*/
         }
     }
 }
