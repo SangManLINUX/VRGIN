@@ -20,7 +20,7 @@ namespace VRGIN.Helpers
     /// </summary>
     public static class ResourceManager
     {
-        private static readonly string VERSION = string.Join(".", Application.unityVersion.Split('.').Take(2).ToArray());
+        //private static readonly string VERSION = string.Join(".", Application.unityVersion.Split('.').Take(2).ToArray());
 
         public static byte[] SteamVR
         {
@@ -60,13 +60,13 @@ namespace VRGIN.Helpers
             }
         }
 
-        public static byte[] Hands
+        /*public static byte[] Hands
         {
             get
             {
                 return Resource.hands_5_3;
             }
-        }
+        }*/
 
 
     }

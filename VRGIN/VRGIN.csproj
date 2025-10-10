@@ -285,26 +285,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>Data\Plugins\x86_64\openvr_api.dll</TargetPath>
     </ContentWithTargetPath>
-    <ContentWithTargetPath Include="Libs\Data\Managed\System.Drawing.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>Data\Managed\System.Drawing.dll</TargetPath>
-    </ContentWithTargetPath>
-    <ContentWithTargetPath Include="Libs\Data\Managed\System.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>Data\Managed\System.dll</TargetPath>
-    </ContentWithTargetPath>
-    <ContentWithTargetPath Include="Libs\Data\Managed\System.Xml.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>Data\Managed\System.Xml.dll</TargetPath>
-    </ContentWithTargetPath>
-    <ContentWithTargetPath Include="Libs\Data\Managed\System.Xml.Linq.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>Data\Managed\System.Xml.Linq.dll</TargetPath>
-    </ContentWithTargetPath>
-    <ContentWithTargetPath Include="Libs\Data\Managed\System.Configuration.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>Data\Managed\System.Configuration.dll</TargetPath>
-    </ContentWithTargetPath>
     <Content Include="Libs\Plugins\Images\icon_school.png" />
     <Content Include="SteamVR\Textures\arrow.png" />
     <Content Include="SteamVR\Textures\background.png" />
@@ -313,14 +293,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="Resources\hands_5_3" />
     <None Include="Resources\vrgin_2018_4" />
-    <None Include="Resources\vrgin_5_0" />
-    <None Include="Resources\vrgin_5_2" />
-    <None Include="Resources\vrgin_5_3" />
-    <None Include="Resources\vrgin_5_4" />
-    <None Include="Resources\vrgin_5_5" />
-    <None Include="Resources\vrgin_5_6" />
     <None Include="SteamVR\Prefabs\[CameraRig].prefab" />
     <None Include="SteamVR\Prefabs\[Status].prefab" />
     <None Include="SteamVR\Prefabs\[SteamVR].prefab" />
@@ -345,6 +318,9 @@
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.Unity.Analyzers.1.25.0\analyzers\dotnet\cs\Microsoft.Unity.Analyzers.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Libs\Data\Managed\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.2018.4.11.4\build\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.targets" Condition="Exists('..\packages\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.2018.4.11.4\build\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.targets')" />
