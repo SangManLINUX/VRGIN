@@ -32,8 +32,6 @@ namespace VRGIN.Controls.Tools
         public SteamVR_Action_Boolean touchpadClickAction = SteamVR_Input.GetBooleanAction("TouchpadClick");
         public SteamVR_Action_Boolean touchpadTouchAction = SteamVR_Input.GetBooleanAction("TouchpadTouch");
         public SteamVR_Action_Vector2 touchpadAxisAction = SteamVR_Input.GetVector2Action("TouchpadMove");
-        
-        public SteamVR_Input_Sources handType = SteamVR_Input_Sources.Any;
 
 
         public void TakeGUI(GUIQuad quad)
@@ -127,14 +125,15 @@ namespace VRGIN.Controls.Tools
             //var device = this.Controller;
 
             //if (device.GetPressDown(ButtonMask.Touchpad | ButtonMask.Trigger))
-            if (touchpadClickAction.GetStateDown(handType) || triggerAction.GetStateDown(handType))
+            if (touchpadClickAction.GetStateDown(Owner.Tracking.inputSource)
+                || triggerAction.GetStateDown(Owner.Tracking.inputSource))
             {
                 VR.Input.Mouse.LeftButtonDown();
                 pressDownTime = Time.unscaledTime;
             }
 
             //if (device.GetPressUp(ButtonMask.Grip))
-            if (grabGripAction.GetStateUp(handType))
+            if (grabGripAction.GetStateUp(Owner.Tracking.inputSource))
             {
                 if (Gui)
                 {
@@ -147,17 +146,17 @@ namespace VRGIN.Controls.Tools
             }
 
             //if (device.GetTouchDown(ButtonMask.Touchpad))
-            if (touchpadTouchAction.GetStateDown(handType))
+            if (touchpadTouchAction.GetStateDown(Owner.Tracking.inputSource))
             {
                 //touchDownPosition = device.GetAxis();
-                touchDownPosition = touchpadAxisAction.GetAxis(handType);
+                touchDownPosition = touchpadAxisAction.GetAxis(Owner.Tracking.inputSource);
                 touchDownMousePosition = MouseOperations.GetClientCursorPosition();
             }
             //if (device.GetTouch(ButtonMask.Touchpad) && (Time.unscaledTime - pressDownTime) > 0.3f)
-            if (touchpadTouchAction.GetState(handType) && (Time.unscaledTime - pressDownTime) > 0.3f)
+            if (touchpadTouchAction.GetState(Owner.Tracking.inputSource) && (Time.unscaledTime - pressDownTime) > 0.3f)
             {
                 //var pos = device.GetAxis();
-                var pos = touchpadAxisAction.GetAxis(handType);
+                var pos = touchpadAxisAction.GetAxis(Owner.Tracking.inputSource);
                 var diff = pos - (VR.HMD == HMDType.Oculus ? Vector2.zero : touchDownPosition);
                 var factor = VR.HMD == HMDType.Oculus ? Time.unscaledDeltaTime * 5 : 1f;
                 // We can only move by integral number of pixels, so accumulate them until we have an integral value
@@ -175,7 +174,8 @@ namespace VRGIN.Controls.Tools
             }
 
             //if (device.GetPressUp(ButtonMask.Touchpad | ButtonMask.Trigger))
-            if (touchpadClickAction.GetStateUp(handType) || triggerAction.GetStateUp(handType))
+            if (touchpadClickAction.GetStateUp(Owner.Tracking.inputSource)
+                || triggerAction.GetStateUp(Owner.Tracking.inputSource))
             {
                 VR.Input.Mouse.LeftButtonUp();
                 pressDownTime = 0;

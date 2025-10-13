@@ -64,7 +64,6 @@ namespace VRGIN.Controls.Tools
         public SteamVR_Action_Boolean touchpadTouchAction = SteamVR_Input.GetBooleanAction("TouchpadTouch");
         public SteamVR_Action_Boolean grabGripAction = SteamVR_Input.GetBooleanAction("GrabGrip");
         public SteamVR_Action_Boolean triggerAction = SteamVR_Input.GetBooleanAction("GrabPinch");
-        public SteamVR_Input_Sources handType = SteamVR_Input_Sources.Any;
 
         public override Texture2D Image
         {
@@ -183,10 +182,10 @@ namespace VRGIN.Controls.Tools
         private void CheckRotationalPress()
         {
             //if (Controller.GetPressDown(EVRButtonId.k_EButton_SteamVR_Touchpad))
-            if (touchpadClickAction.GetStateDown(handType))
+            if (touchpadClickAction.GetStateDown(Owner.Tracking.inputSource))
             {
                 //var v = Controller.GetAxis(EVRButtonId.k_EButton_SteamVR_Touchpad);
-                var v = touchpadAxisAction.GetAxis(handType);
+                var v = touchpadAxisAction.GetAxis(Owner.Tracking.inputSource);
                 _ProspectedPlayArea.Reset();
                 if (v.x < -0.2f)
                 {
@@ -206,11 +205,11 @@ namespace VRGIN.Controls.Tools
             if (State == WarpState.None)
             {
                 //var v = Controller.GetAxis(EVRButtonId.k_EButton_SteamVR_Touchpad);
-                var v = touchpadAxisAction.GetAxis(handType);
+                var v = touchpadAxisAction.GetAxis(Owner.Tracking.inputSource);
                 if (v.magnitude < 0.5f)
                 {
                     //if (Controller.GetTouchDown(EVRButtonId.k_EButton_SteamVR_Touchpad) /*||Controller.GetTouch(EVRButtonId.k_EButton_SteamVR_Touchpad)*/)
-                    if (touchpadTouchAction.GetStateDown(handType))
+                    if (touchpadTouchAction.GetStateDown(Owner.Tracking.inputSource))
                     {
                         EnterState(WarpState.Rotating);
                     }
@@ -221,7 +220,7 @@ namespace VRGIN.Controls.Tools
                 }
 
                 //if (Controller.GetPressDown(EVRButtonId.k_EButton_Grip))
-                if (grabGripAction.GetStateDown(handType))
+                if (grabGripAction.GetStateDown(Owner.Tracking.inputSource))
                 {
                     EnterState(WarpState.Grabbing);
                 }
@@ -240,7 +239,7 @@ namespace VRGIN.Controls.Tools
             if (State == WarpState.Transforming)
             {
                 //if (Controller.GetPressUp(EVRButtonId.k_EButton_Axis0))
-                if (touchpadClickAction.GetStateUp(handType))
+                if (touchpadClickAction.GetStateUp(Owner.Tracking.inputSource))
                 {
                     // Warp!
                     _ProspectedPlayArea.Apply();
@@ -255,21 +254,21 @@ namespace VRGIN.Controls.Tools
             if (State == WarpState.None)
             {
                 //if (Controller.GetHairTriggerDown())
-                if (triggerAction.GetStateDown(handType))
+                if (triggerAction.GetStateDown(Owner.Tracking.inputSource))
                 {
                     _TriggerDownTime = Time.unscaledTime;
                 }
                 if (_TriggerDownTime != null)
                 {
                     //if (Controller.GetHairTrigger() && (Time.unscaledTime - _TriggerDownTime) > EXACT_IMPERSONATION_TIME)
-                    if (triggerAction.GetState(handType) && (Time.unscaledTime - _TriggerDownTime) > EXACT_IMPERSONATION_TIME)
+                    if (triggerAction.GetState(Owner.Tracking.inputSource) && (Time.unscaledTime - _TriggerDownTime) > EXACT_IMPERSONATION_TIME)
                     {
                         VRManager.Instance.Mode.Impersonate(VR.Interpreter.FindNextActorToImpersonate(),
                             ImpersonationMode.Exactly);
                         _TriggerDownTime = null;
                     }
                     //if (VRManager.Instance.Interpreter.Actors.Any() && Controller.GetHairTriggerUp())
-                    if (VRManager.Instance.Interpreter.Actors.Any() && triggerAction.GetStateUp(handType))
+                    if (VRManager.Instance.Interpreter.Actors.Any() && triggerAction.GetStateUp(Owner.Tracking.inputSource))
                     {
                         VRManager.Instance.Mode.Impersonate(VR.Interpreter.FindNextActorToImpersonate(),
                             ImpersonationMode.Approximately);
@@ -283,7 +282,7 @@ namespace VRGIN.Controls.Tools
             if (Showing)
             {
                 //_Points.Add(Controller.GetAxis(EVRButtonId.k_EButton_Axis0));
-                _Points.Add(touchpadAxisAction.GetAxis(handType));
+                _Points.Add(touchpadAxisAction.GetAxis(Owner.Tracking.inputSource));
 
                 if (_Points.Count > 2)
                 {
@@ -292,13 +291,13 @@ namespace VRGIN.Controls.Tools
             }
 
             //if (Controller.GetPressDown(EVRButtonId.k_EButton_Axis0))
-            if (touchpadClickAction.GetStateDown(handType))
+            if (touchpadClickAction.GetStateDown(Owner.Tracking.inputSource))
             {
                 EnterState(WarpState.Transforming);
             }
 
             //if (Controller.GetTouchUp(EVRButtonId.k_EButton_Axis0))
-            if (touchpadTouchAction.GetStateUp(handType))
+            if (touchpadTouchAction.GetStateUp(Owner.Tracking.inputSource))
             {
                 EnterState(WarpState.None);
             }
@@ -333,28 +332,29 @@ namespace VRGIN.Controls.Tools
             }
 
             //if (HasLock() && OtherController.Input.GetPressDown(SECONDARY_SCALE_BUTTON))
-            if (HasLock() && triggerAction.GetStateDown(handType))
+            if (HasLock() && triggerAction.GetStateDown(OtherController.Tracking.inputSource))
             {
                 _ScaleInitialized = false;
             }
 
             //if (HasLock() && OtherController.Input.GetPressDown(SECONDARY_ROTATE_BUTTON))
-            if (HasLock() && grabGripAction.GetStateDown(handType))
+            if (HasLock() && grabGripAction.GetStateDown(OtherController.Tracking.inputSource))
             {
                 _RotationInitialized = false;
             }
 
 
             //if (Controller.GetPress(EVRButtonId.k_EButton_Grip))
-            if (grabGripAction.GetState(handType))
+            if (grabGripAction.GetState(Owner.Tracking.inputSource))
             {
                 //if (HasLock() && (OtherController.Input.GetPress(SECONDARY_ROTATE_BUTTON) || OtherController.Input.GetPress(SECONDARY_SCALE_BUTTON)))
-                if (HasLock() && (grabGripAction.GetState(handType) || triggerAction.GetState(handType)))
+                if (HasLock() && (grabGripAction.GetState(OtherController.Tracking.inputSource)
+                    || triggerAction.GetState(OtherController.Tracking.inputSource)))
                 {
                     var newFromTo = (OtherController.transform.position - transform.position).normalized;
 
                     //if (OtherController.Input.GetPress(SECONDARY_SCALE_BUTTON))
-                    if (triggerAction.GetState(handType))
+                    if (triggerAction.GetState(OtherController.Tracking.inputSource))
                     {
                         InitializeScaleIfNeeded();
                         var controllerDistance = Vector3.Distance(OtherController.transform.position, transform.position) * (_InitialIPD / VR.Settings.IPDScale);
@@ -364,7 +364,7 @@ namespace VRGIN.Controls.Tools
                     }
 
                     //if (OtherController.Input.GetPress(SECONDARY_ROTATE_BUTTON))
-                    if (grabGripAction.GetState(handType))
+                    if (grabGripAction.GetState(OtherController.Tracking.inputSource))
                     {
                         InitializeRotationIfNeeded();
                         var angleDiff = Calculator.Angle(_PrevFromTo, newFromTo) * VR.Settings.RotationMultiplier;
@@ -391,7 +391,9 @@ namespace VRGIN.Controls.Tools
                         _ProspectedPlayArea.Height -= diffPos.y;
                         //VRLog.Info("Rotate: {0}", NormalizeAngle(diffRot.eulerAngles.y));
                         //if (!VR.Settings.GrabRotationImmediateMode && Controller.GetPress(ButtonMask.Trigger | ButtonMask.Touchpad))
-                        if (!VR.Settings.GrabRotationImmediateMode && (triggerAction.GetState(handType) || touchpadClickAction.GetState(handType)))
+                        if (!VR.Settings.GrabRotationImmediateMode
+                            && (triggerAction.GetState(Owner.Tracking.inputSource)
+                            || touchpadClickAction.GetState(Owner.Tracking.inputSource)))
                         {
                             //VR.Camera.SteamCam.origin.transform.RotateAround(VR.Camera.Head.position, Vector3.up, -angleDiff);
                             VR.Camera.SteamCam.transform.parent.transform.RotateAround(VR.Camera.Head.position, Vector3.up, -angleDiff);
@@ -403,7 +405,7 @@ namespace VRGIN.Controls.Tools
                 }
             }
             //if (Controller.GetPressUp(EVRButtonId.k_EButton_Grip))
-            if (grabGripAction.GetStateUp(handType))
+            if (grabGripAction.GetStateUp(Owner.Tracking.inputSource))
             {
                 EnterState(WarpState.None);
                 if (Time.unscaledTime - _GripStartTime < GRIP_TIME_THRESHOLD)
@@ -415,7 +417,9 @@ namespace VRGIN.Controls.Tools
             }
 
             //if(VR.Settings.GrabRotationImmediateMode && Controller.GetPressUp(ButtonMask.Trigger | ButtonMask.Touchpad))
-            if (VR.Settings.GrabRotationImmediateMode && (triggerAction.GetStateUp(handType) || touchpadClickAction.GetStateUp(handType)))
+            if (VR.Settings.GrabRotationImmediateMode
+                && (triggerAction.GetStateUp(Owner.Tracking.inputSource)
+                || touchpadClickAction.GetStateUp(Owner.Tracking.inputSource)))
             {
                 // Rotate
                 var originalLookDirection = Vector3.ProjectOnPlane(transform.position - VR.Camera.Head.position, Vector3.up).normalized;

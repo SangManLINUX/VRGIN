@@ -27,7 +27,6 @@ namespace VRGIN.Controls.Handlers
 
         public SteamVR_Action_Boolean grabPinchAction = SteamVR_Input.GetBooleanAction("GrabPinch");
         public SteamVR_Action_Boolean grabGripAction = SteamVR_Input.GetBooleanAction("GrabGrip");
-        public SteamVR_Input_Sources handType = SteamVR_Input_Sources.Any;
 
         protected override void OnStart()
         {
@@ -157,19 +156,19 @@ namespace VRGIN.Controls.Handlers
                 if (!IsResizing)
                 {
                     //if (Device.GetPressDown(EVRButtonId.k_EButton_SteamVR_Trigger))
-                    if (grabPinchAction.GetStateDown(handType))
+                    if (grabPinchAction.GetStateDown(_Controller.Tracking.inputSource))
                     {
                         IsPressing = true;
                         VR.Input.Mouse.LeftButtonDown();
                         mouseDownPosition = Vector2.Scale(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y), _ScaleVector);
                     }
                     //if (Device.GetPress(EVRButtonId.k_EButton_SteamVR_Trigger))
-                    if (grabPinchAction.GetState(handType))
+                    if (grabPinchAction.GetState(_Controller.Tracking.inputSource))
                     {
                         IsPressing = true;
                     }
                     //if (Device.GetPressUp(EVRButtonId.k_EButton_SteamVR_Trigger))
-                    if (grabPinchAction.GetStateUp(handType))
+                    if (grabPinchAction.GetStateUp(_Controller.Tracking.inputSource))
                     {
                         IsPressing = true;
                         VR.Input.Mouse.LeftButtonUp();
@@ -177,7 +176,7 @@ namespace VRGIN.Controls.Handlers
                     }
 
                     //if (Device.GetPressUp(EVRButtonId.k_EButton_Grip))
-                    if (grabGripAction.GetStateUp(handType))
+                    if (grabGripAction.GetStateUp(_Controller.Tracking.inputSource))
                     {
                         var menuTool = _Controller.GetComponent<MenuTool>();
                         if (menuTool && !menuTool.Gui)

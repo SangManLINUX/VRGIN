@@ -87,7 +87,6 @@ namespace VRGIN.Controls
         public RumbleManager Rumble { get; private set; }
 
         public SteamVR_Action_Boolean applicationMenuAction = SteamVR_Input.GetBooleanAction("ApplicationMenu");
-        public SteamVR_Input_Sources handType = SteamVR_Input_Sources.Any;
 
         /// <summary>
         /// Tries to acquire the focus of the controller, meaning that tools will be temporarily halted.
@@ -351,7 +350,6 @@ namespace VRGIN.Controls
         {
             base.OnUpdate();
             //var device = SteamVR_Controller.Input((int)Tracking.index);
-            //var device = SteamVR_Input_Sources.Any;
 
             if (_Lock != null && _Lock.IsInvalidating)
             {
@@ -361,18 +359,18 @@ namespace VRGIN.Controls
             if (_Lock == null || !_Lock.IsValid)
             {
                 //if (device.GetPressDown(EVRButtonId.k_EButton_ApplicationMenu))
-                if (applicationMenuAction.GetStateDown(SteamVR_Input_Sources.Any))
+                if (applicationMenuAction.GetStateDown(Tracking.inputSource))
                 {
                     appButtonPressTime = Time.unscaledTime;
                 }
                 //if (device.GetPress(EVRButtonId.k_EButton_ApplicationMenu) && (Time.unscaledTime - appButtonPressTime) > APP_BUTTON_TIME_THRESHOLD)
-                if (applicationMenuAction.GetState(SteamVR_Input_Sources.Any) && (Time.unscaledTime - appButtonPressTime) > APP_BUTTON_TIME_THRESHOLD)
+                if (applicationMenuAction.GetState(Tracking.inputSource) && (Time.unscaledTime - appButtonPressTime) > APP_BUTTON_TIME_THRESHOLD)
                 {
                     ShowHelp();
                     appButtonPressTime = null;
                 }
                 //if (device.GetPressUp(EVRButtonId.k_EButton_ApplicationMenu))
-                if (applicationMenuAction.GetStateUp(SteamVR_Input_Sources.Any))
+                if (applicationMenuAction.GetStateUp(Tracking.inputSource))
                 {
                     if (helpShown)
                     {
@@ -400,17 +398,18 @@ namespace VRGIN.Controls
 
         private void TryReleaseLock()
         {
+            // TODO: I don't get it...
             /*var input = Input;
             foreach(var value in Enum.GetValues(typeof(EVRButtonId)).OfType<EVRButtonId>())
             {
                 if (input.GetPress(value))
                     return;
             }*/
-            // TODO: I don't get it...
-            if (applicationMenuAction.GetState(handType))
+
+            /*if (applicationMenuAction.GetState(Tracking.inputSource))
             {
                 return;
-            }
+            }*/
 
             // Release
             _Lock.Release();
